@@ -245,6 +245,7 @@
         let statsChartInstance = null;
 
         function init() {
+            // Load app data
             const saved = localStorage.getItem('familyTimeTracker');
             if (saved) {
                 appData = JSON.parse(saved);
@@ -252,6 +253,12 @@
                 USERS.forEach(user => appData[user] = {});
             }
             USERS.forEach(user => { if (!appData[user]) appData[user] = {}; });
+
+            // Load saved user identity
+            const savedUser = localStorage.getItem('selectedUserIdentity');
+            if (savedUser && USERS.includes(savedUser)) {
+                currentUser = savedUser;
+            }
 
             renderCalendar();
             renderUsersList();
@@ -279,6 +286,14 @@
             if (page === 'calendar') renderCalendar();
         }
 
+        function selectUser(user) {
+            currentUser = user;
+            // Save selection to remember on next reload
+            localStorage.setItem('selectedUserIdentity', user);
+            renderUsersList();
+            renderCalendar();
+        }
+
         function renderUsersList() {
             const listContainer = document.getElementById('usersList');
             document.getElementById('btnUserName').innerText = currentUser;
@@ -303,7 +318,7 @@
 
                 const div = document.createElement('div');
                 div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isActive ? 'active border-blue-500' : 'border-transparent bg-slate-800/40'}`;
-                div.onclick = () => { currentUser = user; renderUsersList(); renderCalendar(); };
+                div.onclick = () => selectUser(user);
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
@@ -369,7 +384,6 @@
                     if (entry) {
                         const barWidth = Math.min(100, (entry.hours / 10) * 100);
                         const isSelected = user === currentUser;
-                        // Removed 'ring-1 ring-white' and 'shadow-sm' for a cleaner look
                         indicatorsHtml += `
                             <div class="${DOT_COLORS[user]} ${isSelected ? 'opacity-100' : 'opacity-80'} text-white text-[9px] px-1.5 py-0.5 rounded flex justify-between items-center mb-0.5" style="width: ${Math.max(25, barWidth)}%">
                                 <span>${user.charAt(0)}</span><span>${entry.hours}h</span>
