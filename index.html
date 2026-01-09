@@ -264,7 +264,8 @@
         const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
         // Make variables global so HTML handlers can access them
-        window.currentUser = USERS[0];
+        const savedUser = localStorage.getItem('familyTracker_currentUser');
+        window.currentUser = (savedUser && USERS.includes(savedUser)) ? savedUser : USERS[0];
         window.currentDate = new Date(); 
         window.selectedDateForModal = null;
         window.appData = {};
@@ -348,7 +349,12 @@
 
                 const div = document.createElement('div');
                 div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isActive ? 'active border-blue-500' : 'border-transparent bg-slate-800/40'}`;
-                div.onclick = () => { window.currentUser = user; renderUsersList(); renderCalendar(); };
+                div.onclick = () => { 
+                    window.currentUser = user; 
+                    localStorage.setItem('familyTracker_currentUser', user);
+                    renderUsersList(); 
+                    renderCalendar(); 
+                };
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
