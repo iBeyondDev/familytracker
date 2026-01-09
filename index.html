@@ -227,38 +227,275 @@
         </div>
     </div>
 
+
+        
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-card.active {
+            border: 2px solid #3b82f6;
+            background-color: #1e293b;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .nav-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-100">
+
+    <!-- Header -->
+    <header class="bg-slate-800 shadow-md z-20 shrink-0 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-900/50">
+                    <i class="fa-solid fa-clock fa-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-100">Family Tracker <span class="text-blue-500">2026</span></h1>
+            </div>
+
+            <!-- Page Switcher -->
+            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
+                <button id="btnCalendarView" onclick="switchPage('calendar')" class="nav-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent">
+                    <i class="fa-solid fa-calendar-days"></i> Calendar
+                </button>
+                <button id="btnStatsView" onclick="switchPage('stats')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-chart-pie"></i> Stats
+                </button>
+                <button id="btnConsistencyView" onclick="switchPage('consistency')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-fire"></i> Consistency
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 border border-slate-600">
+                    <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Backup</span>
+                </button>
+                <label class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 cursor-pointer border border-slate-600">
+                    <i class="fa-solid fa-upload"></i> <span class="hidden sm:inline">Restore</span>
+                    <input type="file" id="importFile" class="hidden" onchange="importData(this)">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-slate-900 p-4 sm:p-6">
+        <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Calendar -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Month Navigation -->
+                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 flex justify-between items-center sticky top-0 z-10">
+                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <h2 class="text-xl font-bold w-48 text-center text-white" id="currentMonthDisplay">Month 2026</h2>
+                    <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 fade-in">
+                    <div class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid bg-slate-900/50 border border-slate-700/50 rounded-lg overflow-hidden p-1"></div>
+                </div>
+
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-slate-200">Today's Date</h3>
+                        <p class="text-sm text-slate-400" id="todayDateDisplay"></p>
+                    </div>
+                    <button onclick="openLogModal(new Date())" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg shadow-lg shadow-blue-900/20 transition font-medium border border-blue-500">
+                        Log Hours for <span id="btnUserName">Mohammad</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Family Dashboard -->
+            <div class="space-y-6">
+                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 flex flex-col h-full">
+                    <h3 class="font-bold text-lg mb-4 text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-slate-400"></i> Family Dashboard
+                    </h3>
+                    <div id="usersList" class="space-y-3 flex-1 overflow-y-auto no-scrollbar"></div>
+                    <div class="mt-6 pt-6 border-t border-slate-700">
+                         <h4 class="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">Recent Log</h4>
+                         <div id="recentEntries" class="space-y-2 text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Page -->
+        <div id="statsPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
+            <h2 class="text-2xl font-bold text-white mb-2" id="statsMonthTitle">Month Statistics</h2>
+            
+            <div id="personAvgGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="lg:col-span-1 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-center">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Top Monthly Contributor</h3>
+                    <div>
+                        <div class="text-3xl font-bold text-emerald-500" id="statTopPerformer">-</div>
+                        <div class="text-xs text-slate-500 mt-1">Highest total hours this month</div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Daily Work Hours Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Total Monthly Hours Rankings</h3>
+                <div id="statsLeaderboard" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Consistency Page -->
+        <div id="consistencyPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Consistency Metrics</h2>
+                    <p class="text-slate-400 text-sm mt-1">A day is "Consistent" if logged hours are <span class="text-blue-400 font-bold">≥ 2h</span>.</p>
+                </div>
+            </div>
+
+            <div id="consistencyGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Logging Hours -->
+    <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-700" id="logModalContent">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold text-white">Log Work Hours</h3>
+                    <p class="text-sm text-blue-400 font-medium mt-1">For: <span id="modalUserName">Mohammad</span></p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Date</label>
+                    <div class="text-lg font-semibold text-slate-200" id="modalDateDisplay"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Hours Worked</label>
+                    <div class="flex gap-2 mb-3">
+                        <button onclick="setHours(4)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">4h</button>
+                        <button onclick="setHours(8)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">8h</button>
+                        <button onclick="setHours(10)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">10h</button>
+                    </div>
+                    <div class="relative">
+                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Custom hours...">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Notes</label>
+                    <textarea id="notesInput" rows="2" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
+                <button onclick="deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-900/20 rounded-lg font-medium hidden">Delete</button>
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="px-4 py-2 text-slate-300 hover:bg-slate-700 rounded-lg font-medium">Cancel</button>
+                    <button onclick="saveEntry()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Save Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
         <i class="fa-solid fa-circle-check text-green-400"></i>
         <span id="toastMessage">Saved successfully</span>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // TODO: REPLACE WITH YOUR FIREBASE CONFIGURATION
+        // 1. Go to console.firebase.google.com
+        // 2. Create a project
+        // 3. Add a Web App
+        // 4. Copy the config object below
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUsDIShAvRwd73ag9_uBKmMWzNc6VNIDs",
+            authDomain: "familytracker-153b0.firebaseapp.com",
+            projectId: "familytracker-153b0",
+            storageBucket: "familytracker-153b0.firebasestorage.app",
+            messagingSenderId: "985759869640",
+            appId: "1:985759869640:web:71ba9b0c33a9db069393fd",
+            measurementId: "G-HDB997HYD5"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dbRef = ref(db, 'familyTimeTracker');
+
         const USERS = ['Mohammad', 'Fadwa', 'Alia', 'Tasneem'];
         const DOT_COLORS = { 'Mohammad': 'bg-blue-500', 'Fadwa': 'bg-purple-500', 'Alia': 'bg-pink-500', 'Tasneem': 'bg-emerald-500' };
         const CHART_COLORS = { 'Mohammad': '#3b82f6', 'Fadwa': '#a855f7', 'Alia': '#ec4899', 'Tasneem': '#10b981' };
         const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
-        let currentUser = USERS[0];
-        let currentDate = new Date(); 
-        let selectedDateForModal = null;
-        let appData = {};
+        // Make variables global so HTML handlers can access them
+        window.currentUser = USERS[0];
+        window.currentDate = new Date(); 
+        window.selectedDateForModal = null;
+        window.appData = {};
         let statsChartInstance = null;
 
+        // Initialize App
         function init() {
-            const saved = localStorage.getItem('familyTimeTracker');
-            if (saved) {
-                appData = JSON.parse(saved);
-            } else {
-                USERS.forEach(user => appData[user] = {});
-            }
-            USERS.forEach(user => { if (!appData[user]) appData[user] = {}; });
+            // Initialize empty data structure first
+            USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
+            
+            // Listen for data changes from Firebase
+            onValue(dbRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    window.appData = data;
+                    // Ensure all users exist in data
+                    USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
+                } else {
+                    // No data in Firebase, keep default empty structure
+                    USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
+                }
+                
+                // Update UI whenever data changes
+                renderCalendar();
+                renderUsersList();
+                
+                // Update active page if needed
+                if(!document.getElementById('statsPage').classList.contains('hidden')) updateStats();
+                if(!document.getElementById('consistencyPage').classList.contains('hidden')) updateConsistency();
+            });
 
-            renderCalendar();
-            renderUsersList();
             updateTodayDisplay();
+            renderCalendar(); // Initial render
+            renderUsersList();
         }
 
-        function switchPage(page) {
+        window.switchPage = function(page) {
             const pages = ['calendar', 'stats', 'consistency'];
             pages.forEach(p => {
                 const btn = document.getElementById(`btn${p.charAt(0).toUpperCase() + p.slice(1)}View`);
@@ -279,31 +516,33 @@
             if (page === 'calendar') renderCalendar();
         }
 
-        function renderUsersList() {
+        window.renderUsersList = function() {
             const listContainer = document.getElementById('usersList');
-            document.getElementById('btnUserName').innerText = currentUser;
+            document.getElementById('btnUserName').innerText = window.currentUser;
             listContainer.innerHTML = '';
 
-            const currentYear = currentDate.getFullYear();
-            const currentMonth = currentDate.getMonth();
+            const currentYear = window.currentDate.getFullYear();
+            const currentMonth = window.currentDate.getMonth();
             const goal = 160;
 
             USERS.forEach(user => {
                 let mTotal = 0;
-                for (const [key, val] of Object.entries(appData[user])) {
-                    const d = new Date(key);
-                    if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-                        mTotal += parseFloat(val.hours);
+                if (window.appData[user]) {
+                    for (const [key, val] of Object.entries(window.appData[user])) {
+                        const d = new Date(key);
+                        if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                            mTotal += parseFloat(val.hours);
+                        }
                     }
                 }
 
-                const isActive = user === currentUser;
+                const isActive = user === window.currentUser;
                 const percent = Math.min(100, Math.round((mTotal / goal) * 100));
                 let barColor = user === 'Mohammad' ? "bg-blue-600" : (user === 'Fadwa' ? "bg-purple-600" : (user === 'Alia' ? "bg-pink-600" : "bg-emerald-600"));
 
                 const div = document.createElement('div');
                 div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isActive ? 'active border-blue-500' : 'border-transparent bg-slate-800/40'}`;
-                div.onclick = () => { currentUser = user; renderUsersList(); renderCalendar(); };
+                div.onclick = () => { window.currentUser = user; renderUsersList(); renderCalendar(); };
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
@@ -321,16 +560,18 @@
             updateRecentActivity();
         }
 
-        function updateRecentActivity() {
+        window.updateRecentActivity = function() {
             const recentContainer = document.getElementById('recentEntries');
             recentContainer.innerHTML = '';
-            const userEntries = Object.entries(appData[currentUser])
+            if (!window.appData[window.currentUser]) return;
+
+            const userEntries = Object.entries(window.appData[window.currentUser])
                 .map(([k, v]) => ({ date: k, ...v }))
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 3);
 
             if (userEntries.length === 0) {
-                recentContainer.innerHTML = `<p class="text-slate-500 italic text-xs">No entries for ${currentUser}.</p>`;
+                recentContainer.innerHTML = `<p class="text-slate-500 italic text-xs">No entries for ${window.currentUser}.</p>`;
             } else {
                 userEntries.forEach(entry => {
                     recentContainer.innerHTML += `
@@ -343,11 +584,11 @@
             }
         }
 
-        function renderCalendar() {
+        window.renderCalendar = function() {
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
+            const year = window.currentDate.getFullYear();
+            const month = window.currentDate.getMonth();
             document.getElementById('currentMonthDisplay').innerText = `${MONTH_NAMES[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1);
@@ -365,10 +606,10 @@
 
                 let indicatorsHtml = '';
                 USERS.forEach(user => {
-                    const entry = appData[user][dateKey];
+                    const entry = window.appData[user] ? window.appData[user][dateKey] : null;
                     if (entry) {
                         const barWidth = Math.min(100, (entry.hours / 10) * 100);
-                        const isSelected = user === currentUser;
+                        const isSelected = user === window.currentUser;
                         indicatorsHtml += `
                             <div class="${DOT_COLORS[user]} ${isSelected ? 'ring-1 ring-white shadow-sm' : 'opacity-80'} text-white text-[9px] px-1.5 py-0.5 rounded flex justify-between items-center mb-0.5" style="width: ${Math.max(25, barWidth)}%">
                                 <span>${user.charAt(0)}</span><span>${entry.hours}h</span>
@@ -390,9 +631,9 @@
             }
         }
 
-        function updateStats() {
-            const month = currentDate.getMonth();
-            const year = currentDate.getFullYear();
+        window.updateStats = function() {
+            const month = window.currentDate.getMonth();
+            const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             
             document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} ${year} Statistics`;
@@ -403,12 +644,14 @@
             USERS.forEach(user => {
                 let uSum = 0;
                 let logCount = 0;
-                for (const [key, val] of Object.entries(appData[user])) {
-                    const d = new Date(key);
-                    if (d.getMonth() === month && d.getFullYear() === year) {
-                        const hrs = parseFloat(val.hours);
-                        uSum += hrs;
-                        if (hrs > 0) logCount++;
+                if (window.appData[user]) {
+                    for (const [key, val] of Object.entries(window.appData[user])) {
+                        const d = new Date(key);
+                        if (d.getMonth() === month && d.getFullYear() === year) {
+                            const hrs = parseFloat(val.hours);
+                            uSum += hrs;
+                            if (hrs > 0) logCount++;
+                        }
                     }
                 }
                 userTotals[user] = uSum;
@@ -450,7 +693,7 @@
             const datasets = USERS.map(user => {
                 const data = labels.map(day => {
                     const key = formatDateKey(new Date(year, month, day));
-                    return appData[user][key]?.hours || 0;
+                    return window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
                 });
                 return {
                     label: user,
@@ -481,11 +724,11 @@
             });
         }
 
-        function updateConsistency() {
+        window.updateConsistency = function() {
             const grid = document.getElementById('consistencyGrid');
             grid.innerHTML = '';
-            const month = currentDate.getMonth();
-            const year = currentDate.getFullYear();
+            const month = window.currentDate.getMonth();
+            const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const minHours = 2;
 
@@ -497,7 +740,7 @@
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const key = formatDateKey(new Date(year, month, d));
-                    const hrs = appData[user][key]?.hours || 0;
+                    const hrs = window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
                     const isConsistent = hrs >= minHours;
                     
                     history.push(isConsistent);
@@ -550,19 +793,19 @@
             });
         }
 
-        function changeMonth(delta) {
-            currentDate.setMonth(currentDate.getMonth() + delta);
+        window.changeMonth = function(delta) {
+            window.currentDate.setMonth(window.currentDate.getMonth() + delta);
             renderCalendar();
             renderUsersList();
             if(!document.getElementById('statsPage').classList.contains('hidden')) updateStats();
             if(!document.getElementById('consistencyPage').classList.contains('hidden')) updateConsistency();
         }
 
-        function openLogModal(date) {
-            selectedDateForModal = date;
+        window.openLogModal = function(date) {
+            window.selectedDateForModal = date;
             const dateKey = formatDateKey(date);
-            const entry = appData[currentUser][dateKey];
-            document.getElementById('modalUserName').innerText = currentUser;
+            const entry = window.appData[window.currentUser] ? window.appData[window.currentUser][dateKey] : null;
+            document.getElementById('modalUserName').innerText = window.currentUser;
             document.getElementById('modalDateDisplay').innerText = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
             
             if (entry) {
@@ -578,58 +821,80 @@
             setTimeout(() => document.getElementById('logModal').classList.remove('opacity-0'), 10);
         }
 
-        function closeModal() {
+        window.closeModal = function() {
             document.getElementById('logModal').classList.add('opacity-0');
             setTimeout(() => document.getElementById('logModal').classList.add('hidden'), 300);
         }
 
-        function setHours(h) { document.getElementById('hoursInput').value = h; }
+        window.setHours = function(h) { document.getElementById('hoursInput').value = h; }
 
-        function saveEntry() {
+        window.saveEntry = function() {
             const hours = parseFloat(document.getElementById('hoursInput').value);
             const notes = document.getElementById('notesInput').value;
-            const dateKey = formatDateKey(selectedDateForModal);
-            if (isNaN(hours) || hours <= 0) { delete appData[currentUser][dateKey]; }
-            else { appData[currentUser][dateKey] = { hours, notes }; }
+            const dateKey = formatDateKey(window.selectedDateForModal);
+            
+            if (!window.appData[window.currentUser]) window.appData[window.currentUser] = {};
+
+            if (isNaN(hours) || hours <= 0) { 
+                if (window.appData[window.currentUser][dateKey]) {
+                    delete window.appData[window.currentUser][dateKey]; 
+                }
+            } else { 
+                window.appData[window.currentUser][dateKey] = { hours, notes }; 
+            }
             saveToStorage();
             closeModal();
             showToast("Hours saved!");
         }
 
-        function deleteEntry() {
-            delete appData[currentUser][formatDateKey(selectedDateForModal)];
-            saveToStorage();
+        window.deleteEntry = function() {
+            const dateKey = formatDateKey(window.selectedDateForModal);
+            if (window.appData[window.currentUser] && window.appData[window.currentUser][dateKey]) {
+                delete window.appData[window.currentUser][dateKey];
+                saveToStorage();
+            }
             closeModal();
             showToast("Entry deleted.");
         }
 
+        // Modified to save to Firebase
         function saveToStorage() {
-            localStorage.setItem('familyTimeTracker', JSON.stringify(appData));
+            // localStorage.setItem('familyTimeTracker', JSON.stringify(appData));
+            set(dbRef, window.appData)
+                .then(() => {
+                    console.log("Data saved to Firebase");
+                })
+                .catch((error) => {
+                    console.error("Error saving to Firebase:", error);
+                    showToast("Error saving to cloud!");
+                });
+            
+            // Optimistic update
             renderCalendar();
             renderUsersList();
         }
 
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
+        window.exportData = function() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appData));
             const dl = document.createElement('a');
             dl.setAttribute("href", dataStr);
             dl.setAttribute("download", "family_backup_" + new Date().toISOString().slice(0,10) + ".json");
             dl.click();
         }
 
-        function importData(input) {
+        window.importData = function(input) {
             const file = input.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                appData = JSON.parse(e.target.result);
+                window.appData = JSON.parse(e.target.result);
                 saveToStorage();
-                showToast("Restored!");
+                showToast("Restored & Synced!");
             };
             reader.readAsText(file);
         }
 
-        function showToast(msg) {
+        window.showToast = function(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMessage').innerText = msg;
             t.classList.remove('translate-y-20', 'opacity-0');
