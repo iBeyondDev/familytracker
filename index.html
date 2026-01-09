@@ -10,7 +10,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a; /* Dark background */
+            background-color: #0f172a; 
             color: #f1f5f9;
         }
         .calendar-grid {
@@ -25,38 +25,17 @@
         .calendar-day:hover:not(.empty) {
             background-color: #1e293b;
             border-color: #475569;
-            z-index: 10;
         }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .user-card.active {
-            border: 2px solid #3b82f6;
-            background-color: #1e293b;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .nav-btn.active {
             background-color: #3b82f6;
             color: white;
-            border-color: #3b82f6;
         }
         .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 3px solid rgba(255,255,255,0.1);
             border-radius: 50%;
             border-top: 3px solid #3b82f6;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -67,175 +46,82 @@
     <header class="bg-slate-800 shadow-md z-20 shrink-0 border-b border-slate-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-900/50">
-                    <i class="fa-solid fa-cloud fa-lg"></i>
+                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg">
+                    <i class="fa-solid fa-cloud"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-slate-100 flex items-center gap-2">
-                        Family Tracker <span class="text-blue-500">2026</span>
-                    </h1>
-                    <div id="connectionStatus" class="text-[10px] text-emerald-400 flex items-center gap-1">
-                        <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div> Cloud Synced
+                    <h1 class="text-xl font-bold text-slate-100">Family Tracker <span class="text-blue-500">2026</span></h1>
+                    <div id="connectionStatus" class="text-[10px] text-amber-400 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Initializing...
                     </div>
                 </div>
             </div>
 
             <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
-                <button id="btnCalendarView" onclick="window.switchPage('calendar')" class="nav-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent">
-                    <i class="fa-solid fa-calendar-days"></i> Calendar
-                </button>
-                <button id="btnStatsView" onclick="window.switchPage('stats')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-chart-pie"></i> Stats
-                </button>
-                <button id="btnConsistencyView" onclick="window.switchPage('consistency')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-fire"></i> Consistency
-                </button>
-            </div>
-
-            <div class="flex gap-2">
-                <button onclick="window.exportData()" class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 border border-slate-600">
-                    <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Backup</span>
-                </button>
-                <label class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 cursor-pointer border border-slate-600">
-                    <i class="fa-solid fa-upload"></i> <span class="hidden sm:inline">Restore to Cloud</span>
-                    <input type="file" id="importFile" class="hidden" onchange="window.importData(this)">
-                </label>
+                <button id="btnCalendarView" onclick="window.switchPage('calendar')" class="nav-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all">Calendar</button>
+                <button id="btnStatsView" onclick="window.switchPage('stats')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400">Stats</button>
             </div>
         </div>
     </header>
 
     <main class="flex-1 overflow-auto bg-slate-900 p-4 sm:p-6 relative">
+        <!-- Initial Loader Overlay -->
         <div id="mainLoader" class="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center">
-            <div class="spinner w-10 h-10 border-4 border-blue-500 border-t-transparent"></div>
-            <p class="mt-4 text-slate-400 text-sm">Connecting to Family Cloud...</p>
+            <div class="spinner mb-4"></div>
+            <p class="text-slate-400 text-sm">Connecting to Cloud Storage...</p>
         </div>
 
+        <!-- Pages -->
         <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 flex justify-between items-center sticky top-0 z-10">
-                    <button onclick="window.changeMonth(-1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <h2 class="text-xl font-bold w-48 text-center text-white" id="currentMonthDisplay">Month 2026</h2>
-                    <button onclick="window.changeMonth(1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </button>
+            <div class="lg:col-span-2 space-y-4">
+                <div class="bg-slate-800 rounded-xl p-4 flex justify-between items-center border border-slate-700">
+                    <button onclick="window.changeMonth(-1)" class="p-2 hover:bg-slate-700 rounded-full transition"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h2 class="text-xl font-bold text-white" id="currentMonthDisplay">Month 2026</h2>
+                    <button onclick="window.changeMonth(1)" class="p-2 hover:bg-slate-700 rounded-full transition"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
-
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 fade-in">
-                    <div class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase mb-2">
                         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                     </div>
-                    <div id="calendarGrid" class="calendar-grid bg-slate-900/50 border border-slate-700/50 rounded-lg overflow-hidden p-1"></div>
-                </div>
-
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-200">Today's Date</h3>
-                        <p class="text-sm text-slate-400" id="todayDateDisplay"></p>
-                    </div>
-                    <button onclick="window.openLogModal(new Date())" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg shadow-lg shadow-blue-900/20 transition font-medium border border-blue-500">
-                        Log Hours for <span id="btnUserName">Mohammad</span>
-                    </button>
+                    <div id="calendarGrid" class="calendar-grid"></div>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 flex flex-col h-full">
-                    <h3 class="font-bold text-lg mb-4 text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-users text-slate-400"></i> Family Dashboard
-                    </h3>
-                    <div id="usersList" class="space-y-3 flex-1 overflow-y-auto no-scrollbar"></div>
-                    <div class="mt-6 pt-6 border-t border-slate-700">
-                         <h4 class="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">Recent Log</h4>
-                         <div id="recentEntries" class="space-y-2 text-sm"></div>
-                    </div>
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-users"></i> Family</h3>
+                    <div id="usersList" class="space-y-3"></div>
                 </div>
             </div>
         </div>
 
-        <div id="statsPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-2" id="statsMonthTitle">Month Statistics</h2>
-            <div id="personAvgGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="lg:col-span-1 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-center">
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Top Monthly Contributor</h3>
-                    <div>
-                        <div class="text-3xl font-bold text-emerald-500" id="statTopPerformer">-</div>
-                        <div class="text-xs text-slate-500 mt-1">Highest total hours this month</div>
-                    </div>
-                </div>
-                <div class="lg:col-span-3 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Daily Distribution</h3>
-                    <div class="h-64">
-                        <canvas id="statsChart"></canvas>
-                    </div>
-                </div>
+        <div id="statsPage" class="max-w-7xl mx-auto hidden space-y-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                <h3 class="text-slate-400 text-xs font-bold uppercase mb-4">Daily Distribution</h3>
+                <div class="h-64"><canvas id="statsChart"></canvas></div>
             </div>
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Total Monthly Hours Rankings</h3>
-                <div id="statsLeaderboard" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-        </div>
-
-        <div id="consistencyPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <div class="flex justify-between items-end">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">Consistency Metrics</h2>
-                    <p class="text-slate-400 text-sm mt-1">A day is "Consistent" if logged hours are <span class="text-blue-400 font-bold">≥ 2h</span>.</p>
-                </div>
-            </div>
-            <div id="consistencyGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </div>
     </main>
 
-    <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-700" id="logModalContent">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-bold text-white">Log Work Hours</h3>
-                    <p class="text-sm text-blue-400 font-medium mt-1">For: <span id="modalUserName">Mohammad</span></p>
-                </div>
-                <button onclick="window.closeModal()" class="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <!-- Modal for Logging -->
+    <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-md mx-4 border border-slate-700 p-6">
+            <h3 class="text-xl font-bold text-white mb-1">Log Hours</h3>
+            <p class="text-blue-400 text-sm mb-4" id="modalUserInfo"></p>
+            <div class="space-y-4">
+                <input type="number" id="hoursInput" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white" placeholder="Hours (e.g. 8)">
+                <textarea id="notesInput" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="Notes..."></textarea>
             </div>
-            <div class="p-6 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Date</label>
-                    <div class="text-lg font-semibold text-slate-200" id="modalDateDisplay"></div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Hours Worked</label>
-                    <div class="flex gap-2 mb-3">
-                        <button onclick="window.setHours(4)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">4h</button>
-                        <button onclick="window.setHours(8)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">8h</button>
-                        <button onclick="window.setHours(10)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">10h</button>
-                    </div>
-                    <div class="relative">
-                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Custom hours...">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Notes</label>
-                    <textarea id="notesInput" rows="2" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Optional notes..."></textarea>
-                </div>
-            </div>
-            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
-                <button onclick="window.deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-900/20 rounded-lg font-medium hidden">Delete</button>
-                <div class="flex gap-3">
-                    <button onclick="window.closeModal()" class="px-4 py-2 text-slate-300 hover:bg-slate-700 rounded-lg font-medium">Cancel</button>
-                    <button id="saveBtn" onclick="window.saveEntry()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium flex items-center gap-2">
-                        <span>Save Entry</span>
-                    </button>
-                </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="window.deleteEntry()" id="deleteBtn" class="text-red-400 mr-auto px-4 py-2 hover:bg-red-900/20 rounded-lg hidden">Delete</button>
+                <button onclick="window.closeModal()" class="text-slate-400 px-4 py-2">Cancel</button>
+                <button onclick="window.saveEntry()" class="bg-blue-600 px-6 py-2 rounded-lg text-white font-bold">Save</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="toastMessage">Saved successfully</span>
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all z-50">
+        <span id="toastMessage">Saved</span>
     </div>
 
     <script type="module">
@@ -244,367 +130,165 @@
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteField } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         const USERS = ['Mohammad', 'Fadwa', 'Alia', 'Tasneem'];
-        const DOT_COLORS = { 'Mohammad': 'bg-blue-500', 'Fadwa': 'bg-purple-500', 'Alia': 'bg-pink-500', 'Tasneem': 'bg-emerald-500' };
-        const CHART_COLORS = { 'Mohammad': '#3b82f6', 'Fadwa': '#a855f7', 'Alia': '#ec4899', 'Tasneem': '#10b981' };
-        const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const COLORS = { 'Mohammad': 'bg-blue-500', 'Fadwa': 'bg-purple-500', 'Alia': 'bg-pink-500', 'Tasneem': 'bg-emerald-500' };
         
         let currentUser = USERS[0];
-        let currentDate = new Date(); 
-        let selectedDateForModal = null;
+        let viewDate = new Date();
+        let selectedDate = null;
         let appData = {};
-        let statsChartInstance = null;
-        let db, auth, user;
-        
+        let db, auth;
+
+        // FIXED PATH: 6 segments (even)
+        // artifacts / {appId} / public / data / family_store / main
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'family-tracker-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'family-tracker-2026';
 
-        // Firebase doc path FIX: Must have even segments (6 segments total here)
-        // artifacts / {appId} / public / data / family_store / main_data
-        const getDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'family_store', 'main_data');
+        const getDocRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'family_store', 'main');
 
         async function init() {
-            USERS.forEach(u => { if (!appData[u]) appData[u] = {}; });
-            
-            const initAuth = async () => {
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('connectionStatus').innerHTML = '<i class="fa-solid fa-circle text-emerald-500"></i> Connected';
+                        startSync();
                     }
-                } catch (e) {
-                    console.error("Auth Error", e);
-                }
-            };
-            
-            await initAuth();
-
-            onAuthStateChanged(auth, (u) => {
-                if (u) {
-                    user = u;
-                    setupRealtimeListener();
-                }
-            });
-
-            updateTodayDisplay();
+                });
+            } catch (err) {
+                console.error("Auth failed", err);
+                document.getElementById('connectionStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i> Auth Error';
+            }
         }
 
-        function setupRealtimeListener() {
-            if (!user) return;
-            const docRef = getDocRef();
-            
-            onSnapshot(docRef, (docSnap) => {
-                const loader = document.getElementById('mainLoader');
-                if (loader) loader.classList.add('hidden');
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    appData = { ...appData, ...data };
-                    // Ensure all users exist in state
-                    USERS.forEach(u => { if (!appData[u]) appData[u] = {}; });
-                    refreshUI();
-                } else {
-                    USERS.forEach(u => { if (!appData[u]) appData[u] = {}; });
-                    refreshUI();
+        function startSync() {
+            onSnapshot(getDocRef(), (snapshot) => {
+                document.getElementById('mainLoader').classList.add('hidden');
+                if (snapshot.exists()) {
+                    appData = snapshot.data();
                 }
+                // Ensure all user keys exist
+                USERS.forEach(u => { if(!appData[u]) appData[u] = {}; });
+                refreshUI();
             }, (error) => {
-                console.error("Sync error:", error);
-                document.getElementById('connectionStatus').innerHTML = `<span class="text-red-400">Sync Error</span>`;
+                console.error("Firestore sync error", error);
+                document.getElementById('connectionStatus').innerHTML = '<i class="fa-solid fa-wifi text-red-500"></i> Sync Error';
             });
         }
 
         function refreshUI() {
             renderCalendar();
-            renderUsersList();
-            if(!document.getElementById('statsPage').classList.contains('hidden')) updateStats();
-            if(!document.getElementById('consistencyPage').classList.contains('hidden')) updateConsistency();
+            renderUsers();
         }
 
-        window.switchPage = function(page) {
-            ['calendar', 'stats', 'consistency'].forEach(p => {
-                const btn = document.getElementById(`btn${p.charAt(0).toUpperCase() + p.slice(1)}View`);
-                const pageEl = document.getElementById(`${p}Page`);
-                if (p === page) {
-                    btn.classList.add('active', 'text-white');
-                    btn.classList.remove('text-slate-400');
-                    pageEl.classList.remove('hidden');
-                } else {
-                    btn.classList.remove('active', 'text-white');
-                    btn.classList.add('text-slate-400');
-                    pageEl.classList.add('hidden');
-                }
-            });
-            if (page === 'stats') updateStats();
-            if (page === 'consistency') updateConsistency();
-            if (page === 'calendar') renderCalendar();
-        }
+        window.switchPage = (page) => {
+            document.getElementById('calendarPage').classList.toggle('hidden', page !== 'calendar');
+            document.getElementById('statsPage').classList.toggle('hidden', page !== 'stats');
+            document.getElementById('btnCalendarView').classList.toggle('active', page === 'calendar');
+            document.getElementById('btnStatsView').classList.toggle('active', page === 'stats');
+            if (page === 'stats') renderStats();
+        };
 
-        function renderUsersList() {
-            const listContainer = document.getElementById('usersList');
-            document.getElementById('btnUserName').innerText = currentUser;
-            listContainer.innerHTML = '';
-
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const goal = 160;
-
+        function renderUsers() {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '';
             USERS.forEach(u => {
-                let mTotal = 0;
-                if(appData[u]) {
-                    for (const [key, val] of Object.entries(appData[u])) {
-                        const d = new Date(key);
-                        if (d.getFullYear() === year && d.getMonth() === month) {
-                            mTotal += parseFloat(val.hours || 0);
-                        }
-                    }
-                }
                 const isActive = u === currentUser;
-                const percent = Math.min(100, Math.round((mTotal / goal) * 100));
-                let barColor = u === 'Mohammad' ? "bg-blue-600" : (u === 'Fadwa' ? "bg-purple-600" : (u === 'Alia' ? "bg-pink-600" : "bg-emerald-600"));
-
                 const div = document.createElement('div');
-                div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isActive ? 'active border-blue-500' : 'border-transparent bg-slate-800/40'}`;
-                div.onclick = () => { currentUser = u; renderUsersList(); renderCalendar(); };
-                div.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-sm">${u.charAt(0)}</span>
-                            <span class="font-bold text-slate-100">${u}</span>
-                        </div>
-                        <span class="text-xl font-bold">${mTotal}h</span>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                        <div class="${barColor} h-full" style="width: ${percent}%"></div>
-                    </div>
-                `;
-                listContainer.appendChild(div);
+                div.className = `p-3 rounded-lg cursor-pointer border-2 transition ${isActive ? 'bg-slate-700 border-blue-500' : 'bg-slate-800 border-transparent'}`;
+                div.onclick = () => { currentUser = u; renderUsers(); renderCalendar(); };
+                div.innerHTML = `<div class="font-bold">${u}</div>`;
+                container.appendChild(div);
             });
-            updateRecentActivity();
-        }
-
-        function updateRecentActivity() {
-            const recentContainer = document.getElementById('recentEntries');
-            recentContainer.innerHTML = '';
-            if(!appData[currentUser]) return;
-            const entries = Object.entries(appData[currentUser])
-                .map(([k, v]) => ({ date: k, ...v }))
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 3);
-            if (entries.length === 0) {
-                recentContainer.innerHTML = `<p class="text-slate-500 italic text-xs">No entries.</p>`;
-            } else {
-                entries.forEach(e => {
-                    recentContainer.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-900/50 p-2 rounded border border-slate-700/50">
-                            <span class="text-slate-400 text-xs">${new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}</span>
-                            <span class="text-white font-medium text-xs">${e.hours}h</span>
-                        </div>`;
-                });
-            }
         }
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            document.getElementById('currentMonthDisplay').innerText = `${MONTH_NAMES[month]} ${year}`;
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const y = viewDate.getFullYear(), m = viewDate.getMonth();
+            document.getElementById('currentMonthDisplay').innerText = `${new Intl.DateTimeFormat('en-US', {month:'long'}).format(viewDate)} ${y}`;
+            
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m + 1, 0).getDate();
 
-            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+            for (let i = 0; i < first; i++) grid.appendChild(document.createElement('div'));
 
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateObj = new Date(year, month, d);
-                const key = formatDateKey(dateObj);
-                const isToday = key === formatDateKey(new Date());
-                let indicators = '';
+            for (let d = 1; d <= days; d++) {
+                const key = formatDateKey(new Date(y, m, d));
+                let dots = '';
                 USERS.forEach(u => {
-                    if(appData[u] && appData[u][key]) {
-                        const e = appData[u][key];
-                        indicators += `<div class="${DOT_COLORS[u]} text-white text-[9px] px-1 py-0.5 rounded mb-0.5">${u.charAt(0)} ${e.hours}h</div>`;
-                    }
+                    if (appData[u]?.[key]) dots += `<div class="h-1.5 w-full ${COLORS[u]} rounded-full mb-0.5"></div>`;
                 });
+
                 const dayEl = document.createElement('div');
-                dayEl.className = `calendar-day rounded-lg p-2 cursor-pointer flex flex-col justify-between bg-slate-800 border border-slate-700 ${isToday ? 'ring-2 ring-blue-500' : ''}`;
-                dayEl.innerHTML = `
-                    <div class="text-xs font-semibold flex justify-between items-center mb-1">
-                        <span class="${isToday ? 'text-blue-400 font-bold' : 'text-slate-500'}">${d}</span>
-                    </div>
-                    <div class="flex flex-col w-full mt-auto">${indicators}</div>`;
-                dayEl.onclick = () => window.openLogModal(dateObj);
+                dayEl.className = `calendar-day bg-slate-800 border border-slate-700 p-1 rounded-md flex flex-col justify-between`;
+                dayEl.innerHTML = `<span class="text-xs text-slate-500">${d}</span><div class="mt-1">${dots}</div>`;
+                dayEl.onclick = () => openModal(new Date(y, m, d));
                 grid.appendChild(dayEl);
             }
         }
 
-        function updateStats() {
-            const month = currentDate.getMonth();
-            const year = currentDate.getFullYear();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} ${year}`;
-            
-            let userTotals = {};
-            let userLogDays = {}; 
-            USERS.forEach(u => {
-                let sum = 0, count = 0;
-                if(appData[u]) {
-                    for (const [k, v] of Object.entries(appData[u])) {
-                        const d = new Date(k);
-                        if (d.getMonth() === month && d.getFullYear() === year) {
-                            sum += parseFloat(v.hours);
-                            if (v.hours > 0) count++;
-                        }
-                    }
-                }
-                userTotals[u] = sum;
-                userLogDays[u] = count;
-            });
-
-            const avgGrid = document.getElementById('personAvgGrid');
-            avgGrid.innerHTML = '';
-            USERS.forEach(u => {
-                const avg = userLogDays[u] > 0 ? (userTotals[u] / userLogDays[u]).toFixed(1) : '0';
-                avgGrid.innerHTML += `
-                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 border-l-4 ${u === 'Mohammad' ? 'border-l-blue-500' : (u === 'Fadwa' ? 'border-l-purple-500' : (u === 'Alia' ? 'border-l-pink-500' : 'border-l-emerald-500'))}">
-                        <h3 class="text-slate-400 text-xs font-bold uppercase mb-2">${u} Avg</h3>
-                        <div class="text-3xl font-bold">${avg}h</div>
-                    </div>`;
-            });
-
-            const sorted = Object.entries(userTotals).sort((a,b) => b[1] - a[1]);
-            document.getElementById('statTopPerformer').innerText = sorted[0][1] > 0 ? sorted[0][0] : '-';
-
-            const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
-            const datasets = USERS.map(u => ({
-                label: u,
-                data: labels.map(day => (appData[u] && appData[u][formatDateKey(new Date(year, month, day))]?.hours) || 0),
-                borderColor: CHART_COLORS[u],
-                backgroundColor: CHART_COLORS[u] + '20',
-                tension: 0.3
-            }));
-
-            const ctx = document.getElementById('statsChart').getContext('2d');
-            if (statsChartInstance) statsChartInstance.destroy();
-            statsChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f1f5f9' } } } }
-            });
-        }
-
-        function updateConsistency() {
-            const grid = document.getElementById('consistencyGrid');
-            grid.innerHTML = '';
-            const m = currentDate.getMonth(), y = currentDate.getFullYear();
-            const days = new Date(y, m + 1, 0).getDate();
-            USERS.forEach(u => {
-                let ok = 0, history = [];
-                for (let d = 1; d <= days; d++) {
-                    const hrs = (appData[u] && appData[u][formatDateKey(new Date(y, m, d))]?.hours) || 0;
-                    const isOk = hrs >= 2;
-                    if (isOk) ok++;
-                    history.push(isOk);
-                }
-                const bg = u === 'Mohammad' ? 'bg-blue-500' : (u === 'Fadwa' ? 'bg-purple-500' : (u === 'Alia' ? 'bg-pink-500' : 'bg-emerald-500'));
-                grid.innerHTML += `
-                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-full ${bg} flex items-center justify-center font-bold">${u.charAt(0)}</div>
-                            <h4 class="font-bold">${u} (${ok}/${days})</h4>
-                        </div>
-                        <div class="flex flex-wrap gap-1">
-                            ${history.map((h, i) => `<div class="w-6 h-6 rounded flex items-center justify-center text-[9px] ${h ? bg : 'bg-slate-700 text-slate-500'}">${i+1}</div>`).join('')}
-                        </div>
-                    </div>`;
-            });
-        }
-
-        window.changeMonth = (d) => { currentDate.setMonth(currentDate.getMonth() + d); refreshUI(); }
-        window.openLogModal = (d) => {
-            selectedDateForModal = d;
-            const key = formatDateKey(d);
-            const e = appData[currentUser] && appData[currentUser][key];
-            document.getElementById('modalUserName').innerText = currentUser;
-            document.getElementById('modalDateDisplay').innerText = d.toLocaleDateString();
-            document.getElementById('hoursInput').value = e ? e.hours : '';
-            document.getElementById('notesInput').value = e ? (e.notes || '') : '';
-            document.getElementById('deleteBtn').classList.toggle('hidden', !e);
+        function openModal(date) {
+            selectedDate = date;
+            const key = formatDateKey(date);
+            const entry = appData[currentUser]?.[key];
+            document.getElementById('modalUserInfo').innerText = `${currentUser} • ${date.toLocaleDateString()}`;
+            document.getElementById('hoursInput').value = entry ? entry.hours : '';
+            document.getElementById('notesInput').value = entry ? (entry.notes || '') : '';
+            document.getElementById('deleteBtn').classList.toggle('hidden', !entry);
             document.getElementById('logModal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('logModal').classList.remove('opacity-0'), 10);
         }
-        window.closeModal = () => {
-            document.getElementById('logModal').classList.add('opacity-0');
-            setTimeout(() => document.getElementById('logModal').classList.add('hidden'), 300);
-        }
-        window.setHours = (h) => document.getElementById('hoursInput').value = h;
+
+        window.closeModal = () => document.getElementById('logModal').classList.add('hidden');
 
         window.saveEntry = async () => {
-            if (!user) return;
             const hrs = parseFloat(document.getElementById('hoursInput').value);
             const notes = document.getElementById('notesInput').value;
-            const key = formatDateKey(selectedDateForModal);
-            const docRef = getDocRef();
+            const key = formatDateKey(selectedDate);
+            if (isNaN(hrs)) return;
+
             try {
-                if (isNaN(hrs) || hrs <= 0) {
-                    await updateDoc(docRef, { [`${currentUser}.${key}`]: deleteField() });
-                } else {
-                    await setDoc(docRef, { [currentUser]: { [key]: { hours: hrs, notes } } }, { merge: true });
-                }
-                showToast("Synced to Cloud!");
+                // Nested field update: user.datekey
+                await setDoc(getDocRef(), {
+                    [currentUser]: { [key]: { hours: hrs, notes } }
+                }, { merge: true });
+                showToast("Synced!");
                 window.closeModal();
-            } catch (e) { showToast("Error: " + e.message); }
-        }
+            } catch (e) { console.error(e); }
+        };
 
         window.deleteEntry = async () => {
-            if (!user) return;
-            const key = formatDateKey(selectedDateForModal);
+            const key = formatDateKey(selectedDate);
             try {
-                await updateDoc(getDocRef(), { [`${currentUser}.${key}`]: deleteField() });
-                showToast("Deleted!");
+                await updateDoc(getDocRef(), {
+                    [`${currentUser}.${key}`]: deleteField()
+                });
+                showToast("Removed!");
                 window.closeModal();
-            } catch (e) { showToast("Error: " + e.message); }
-        }
+            } catch (e) { console.error(e); }
+        };
 
-        window.exportData = () => {
-            const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
-            const a = document.createElement('a');
-            a.href = s;
-            a.download = `family_backup_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-        }
+        window.changeMonth = (val) => {
+            viewDate.setMonth(viewDate.getMonth() + val);
+            renderCalendar();
+        };
 
-        window.importData = (input) => {
-            const f = input.files[0];
-            if (!f) return;
-            const r = new FileReader();
-            r.onload = async (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    await setDoc(getDocRef(), data, { merge: true });
-                    showToast("Cloud Restored!");
-                } catch(err) { showToast("Fail: " + err.message); }
-            };
-            r.readAsText(f);
+        function formatDateKey(d) {
+            return d.toISOString().split('T')[0];
         }
 
         function showToast(m) {
             const t = document.getElementById('toast');
             document.getElementById('toastMessage').innerText = m;
             t.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
-        }
-
-        function formatDateKey(d) {
-            const off = d.getTimezoneOffset();
-            const date = new Date(d.getTime() - (off*60*1000));
-            return date.toISOString().split('T')[0];
-        }
-
-        function updateTodayDisplay() {
-            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2000);
         }
 
         init();
