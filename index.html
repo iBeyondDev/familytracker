@@ -3,88 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Work Tracker 2026</title>
+    <title>Family RPG Tracker 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Confetti Library for gamification effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a; /* Dark background */
-            color: #f1f5f9;
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b1120; /* Deep RPG Dark */
+            color: #e2e8f0;
+            user-select: none;
         }
+
+        /* Gamified Elements */
+        .level-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .xp-bar-bg {
+            background: rgba(255,255,255,0.1);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .xp-bar-fill {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Calendar Styling */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+            gap: 6px;
         }
         .calendar-day {
             min-height: 100px;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
         .calendar-day:hover:not(.empty) {
+            transform: translateY(-2px);
             background-color: #1e293b;
-            border-color: #475569;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: #60a5fa;
             z-index: 10;
         }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .calendar-day:active {
+            transform: scale(0.98);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        .fade-in { animation: fadeIn 0.3s ease-in; }
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .user-card.active {
-            border: 2px solid #3b82f6;
-            background-color: #1e293b;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
+
+        .floating-xp {
+            position: absolute;
+            color: #fbbf24;
+            font-weight: 800;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 50;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-30px) scale(1.2); opacity: 0; }
+        }
+
+        .user-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            background-color: #1e293b;
+        }
+        .user-card.active {
+            border-color: #60a5fa;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .nav-btn { position: relative; overflow: hidden; }
+        .nav-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; width: 0%; height: 2px;
+            background: #60a5fa;
+            transition: width 0.3s ease;
+        }
+        .nav-btn.active::after { width: 100%; }
+        .nav-btn.active { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+        
+        .badge-icon {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            transition: transform 0.2s;
+        }
+        .badge-icon:hover { transform: scale(1.2) rotate(10deg); }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .nav-btn.active {
-            background-color: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
     </style>
 </head>
 
-<body class="h-screen flex flex-col overflow-hidden text-slate-100">
+<body class="h-screen flex flex-col overflow-hidden text-slate-200">
 
     <!-- Header -->
-    <header class="bg-slate-800 shadow-md z-20 shrink-0 border-b border-slate-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-900/50">
-                    <i class="fa-solid fa-clock fa-lg"></i>
+    <header class="bg-slate-900/80 backdrop-blur-md shadow-lg z-30 shrink-0 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div class="flex items-center gap-3 group cursor-pointer" onclick="SoundEngine.playClick()">
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-900/50 group-hover:scale-105 transition-transform duration-300">
+                    <i class="fa-solid fa-gamepad fa-lg"></i>
                 </div>
-                <h1 class="text-xl font-bold text-slate-100">Family Tracker <span class="text-blue-500">2026</span></h1>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Level Up <span class="text-blue-500">Life</span></h1>
+                    <p class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Family Tracker v2.1</p>
+                </div>
             </div>
 
-            <!-- Page Switcher -->
-            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
-                <button id="btnCalendarView" onclick="switchPage('calendar')" class="nav-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent">
-                    <i class="fa-solid fa-calendar-days"></i> Calendar
+            <!-- Gamified Nav -->
+            <div class="flex bg-slate-950/50 p-1.5 rounded-2xl border border-slate-800 backdrop-blur-sm">
+                <button id="btnCalendarView" onclick="switchPage('calendar')" class="nav-btn active px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days"></i> Quests
                 </button>
-                <button id="btnStatsView" onclick="switchPage('stats')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-chart-pie"></i> Stats
+                <button id="btnStatsView" onclick="switchPage('stats')" class="nav-btn px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-chart-simple"></i> Stats
                 </button>
-                <button id="btnConsistencyView" onclick="switchPage('consistency')" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-transparent text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-fire"></i> Consistency
+                <button id="btnConsistencyView" onclick="switchPage('consistency')" class="nav-btn px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-fire"></i> Streaks
                 </button>
             </div>
 
             <div class="flex gap-2">
-                <button onclick="exportData()" class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 border border-slate-600">
-                    <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Backup</span>
+                <button onclick="exportData()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg transition border border-slate-700 hover:border-slate-500">
+                    <i class="fa-solid fa-save mr-1"></i> SAVE
                 </button>
-                <label class="text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-md transition flex items-center gap-2 cursor-pointer border border-slate-600">
-                    <i class="fa-solid fa-upload"></i> <span class="hidden sm:inline">Restore</span>
+                <label class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg transition cursor-pointer border border-slate-700 hover:border-slate-500">
+                    <i class="fa-solid fa-upload mr-1"></i> LOAD
                     <input type="file" id="importFile" class="hidden" onchange="importData(this)">
                 </label>
             </div>
@@ -92,50 +171,71 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-auto bg-slate-900 p-4 sm:p-6">
-        <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column: Calendar -->
-            <div class="lg:col-span-2 space-y-6">
+    <main class="flex-1 overflow-auto bg-[#0b1120] p-3 sm:p-6 relative">
+        <!-- Background Ambient Effect -->
+        <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none"></div>
+
+        <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+            <!-- Left Column: Calendar (8 cols) -->
+            <div class="lg:col-span-8 space-y-6">
                 <!-- Month Navigation -->
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 flex justify-between items-center sticky top-0 z-10">
-                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                <div class="bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-800 p-4 flex justify-between items-center sticky top-0 z-20">
+                    <button onclick="changeMonth(-1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-700">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
-                    <h2 class="text-xl font-bold w-48 text-center text-white" id="currentMonthDisplay">Month 2026</h2>
-                    <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-700 rounded-full transition w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                    <div class="text-center">
+                        <h2 class="text-2xl font-black text-white tracking-tight" id="currentMonthDisplay">Month 2026</h2>
+                        <div class="text-xs text-blue-400 font-bold tracking-widest uppercase mt-1">Quest Log</div>
+                    </div>
+                    <button onclick="changeMonth(1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-700">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
 
                 <!-- Calendar Grid -->
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-4 fade-in">
-                    <div class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div class="bg-slate-900/60 rounded-2xl shadow-2xl border border-slate-800 p-4 fade-in backdrop-blur-sm">
+                    <div class="grid grid-cols-7 gap-4 mb-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">
                         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                     </div>
-                    <div id="calendarGrid" class="calendar-grid bg-slate-900/50 border border-slate-700/50 rounded-lg overflow-hidden p-1"></div>
+                    <div id="calendarGrid" class="calendar-grid bg-slate-950/50 rounded-xl p-2 border border-slate-800/50"></div>
                 </div>
 
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-200">Today's Date</h3>
-                        <p class="text-sm text-slate-400" id="todayDateDisplay"></p>
+                <!-- Action Bar -->
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-wrap gap-4 items-center justify-between shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-500/10 p-3 rounded-full text-blue-400">
+                            <i class="fa-regular fa-calendar-check fa-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-lg">Today's Mission</h3>
+                            <p class="text-xs text-slate-400 font-mono" id="todayDateDisplay"></p>
+                        </div>
                     </div>
-                    <button onclick="openLogModal(new Date())" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg shadow-lg shadow-blue-900/20 transition font-medium border border-blue-500">
-                        Log Hours for <span id="btnUserName">Mohammad</span>
+                    <button onclick="openLogModal(new Date())" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-900/30 transition transform hover:-translate-y-0.5 font-bold border-t border-blue-400 flex items-center gap-3 group">
+                        <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform"></i>
+                        <span>Log Hours for <span id="btnUserName" class="underline decoration-dashed underline-offset-4">Mohammad</span></span>
                     </button>
                 </div>
             </div>
 
-            <!-- Right Column: Family Dashboard -->
-            <div class="space-y-6">
-                <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 flex flex-col h-full">
-                    <h3 class="font-bold text-lg mb-4 text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-users text-slate-400"></i> Family Dashboard
-                    </h3>
-                    <div id="usersList" class="space-y-3 flex-1 overflow-y-auto no-scrollbar"></div>
-                    <div class="mt-6 pt-6 border-t border-slate-700">
-                         <h4 class="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">Recent Log</h4>
-                         <div id="recentEntries" class="space-y-2 text-sm"></div>
+            <!-- Right Column: Family Dashboard (4 cols) -->
+            <div class="lg:col-span-4 space-y-6 flex flex-col h-full">
+                <div class="bg-slate-900/90 rounded-2xl shadow-xl border border-slate-800 p-5 flex flex-col h-full backdrop-blur-md">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-black text-lg text-white flex items-center gap-2">
+                            <i class="fa-solid fa-users-viewfinder text-blue-500"></i> 
+                            Party Members
+                        </h3>
+                        <span class="text-xs font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700">LVL & XP</span>
+                    </div>
+                    
+                    <div id="usersList" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-1"></div>
+                    
+                    <div class="mt-6 pt-6 border-t border-slate-800">
+                         <h4 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Recent Activity
+                         </h4>
+                         <div id="recentEntries" class="space-y-3"></div>
                     </div>
                 </div>
             </div>
@@ -143,39 +243,46 @@
 
         <!-- Statistics Page -->
         <div id="statsPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-2" id="statsMonthTitle">Month Statistics</h2>
+            <h2 class="text-3xl font-black text-white mb-2 tracking-tight" id="statsMonthTitle">Month Statistics</h2>
             
             <div id="personAvgGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="lg:col-span-1 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-center">
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Top Monthly Contributor</h3>
-                    <div>
-                        <div class="text-3xl font-bold text-emerald-500" id="statTopPerformer">-</div>
-                        <div class="text-xs text-slate-500 mt-1">Highest total hours this month</div>
+                <div class="lg:col-span-1 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <h3 class="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy"></i> MVP of the Month
+                    </h3>
+                    <div class="relative z-10">
+                        <div class="text-4xl font-black text-white" id="statTopPerformer">-</div>
+                        <div class="text-xs text-slate-400 mt-2 font-medium">Highest XP Contribution</div>
                     </div>
+                    <i class="fa-solid fa-crown absolute bottom-4 right-4 text-6xl text-slate-800/50 rotate-12"></i>
                 </div>
 
-                <div class="lg:col-span-3 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">Daily Work Hours Distribution</h3>
+                <div class="lg:col-span-3 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">XP Gain Over Time</h3>
                     <div class="h-64">
                         <canvas id="statsChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Total Monthly Hours Rankings</h3>
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Leaderboard Rankings</h3>
                 <div id="statsLeaderboard" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
         <!-- Consistency Page -->
         <div id="consistencyPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <div class="flex justify-between items-end">
+            <div class="flex flex-col sm:flex-row justify-between items-end gap-4 border-b border-slate-800 pb-6">
                 <div>
-                    <h2 class="text-2xl font-bold text-white">Consistency Metrics</h2>
-                    <p class="text-slate-400 text-sm mt-1">A day is "Consistent" if logged hours are <span class="text-blue-400 font-bold">≥ 2h</span>.</p>
+                    <h2 class="text-3xl font-black text-white tracking-tight">Consistency Streaks</h2>
+                    <p class="text-slate-400 text-sm mt-2 font-medium">Build your combo multiplier! <span class="text-blue-400 font-bold bg-blue-400/10 px-2 py-0.5 rounded">≥ 2h daily</span> maintains streak.</p>
+                </div>
+                <div class="text-right hidden sm:block">
+                    <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">COMBO!</div>
                 </div>
             </div>
 
@@ -186,62 +293,99 @@
     </main>
 
     <!-- Modal for Logging Hours -->
-    <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-slate-700" id="logModalContent">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-bold text-white">Log Work Hours</h3>
-                    <p class="text-sm text-blue-400 font-medium mt-1">For: <span id="modalUserName">Mohammad</span></p>
-                </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="p-6 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Date</label>
-                    <div class="text-lg font-semibold text-slate-200" id="modalDateDisplay"></div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Hours Worked</label>
-                    <div class="flex gap-2 mb-3">
-                        <button onclick="setHours(4)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">4h</button>
-                        <button onclick="setHours(8)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">8h</button>
-                        <button onclick="setHours(10)" class="flex-1 py-2 border border-slate-600 bg-slate-700 rounded-lg hover:bg-blue-600/20 text-slate-200 transition">10h</button>
-                    </div>
-                    <div class="relative">
-                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Custom hours...">
+    <div id="logModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl mx-4 transform scale-95 transition-transform duration-300 border border-slate-700 relative overflow-hidden flex flex-col md:flex-row" id="logModalContent">
+            <!-- Modal glow effect -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            
+            <!-- Left Side: Input Form -->
+            <div class="flex-1 p-6 space-y-6 border-r border-slate-800">
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Log Activity</h3>
+                        <p class="text-xs text-blue-400 font-bold mt-1 uppercase tracking-wider">Player: <span id="modalUserName" class="text-white">Mohammad</span></p>
                     </div>
                 </div>
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Notes</label>
-                    <textarea id="notesInput" rows="2" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-white" placeholder="Optional notes..."></textarea>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quest Date</label>
+                    <div class="text-lg font-bold text-slate-200 bg-slate-950/50 px-4 py-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <i class="fa-regular fa-calendar text-slate-400"></i>
+                        <span id="modalDateDisplay"></span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Duration (Hours)</label>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button onclick="setHours(4)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-blue-600 hover:border-blue-500 hover:text-white text-slate-300 transition font-bold text-xs group">
+                            4h
+                        </button>
+                        <button onclick="setHours(8)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-purple-600 hover:border-purple-500 hover:text-white text-slate-300 transition font-bold text-xs group">
+                            8h
+                        </button>
+                        <button onclick="setHours(10)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-orange-600 hover:border-orange-500 hover:text-white text-slate-300 transition font-bold text-xs group">
+                            10h
+                        </button>
+                    </div>
+                    <div class="relative group">
+                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-900/50 focus:border-blue-500 outline-none text-white text-xl font-bold transition-all pl-12" placeholder="0.0">
+                        <i class="fa-solid fa-hourglass-half absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quest Notes</label>
+                    <textarea id="notesInput" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-white text-sm" placeholder="What did you achieve?"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button onclick="deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-900/30 rounded-xl font-bold text-sm hidden transition border border-transparent hover:border-red-900/50">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button onclick="saveEntry()" class="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 transform hover:-translate-y-0.5 transition-all">
+                        <i class="fa-solid fa-check mr-2"></i> Save
+                    </button>
                 </div>
             </div>
-            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
-                <button onclick="deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-900/20 rounded-lg font-medium hidden">Delete</button>
-                <div class="flex gap-3">
-                    <button onclick="closeModal()" class="px-4 py-2 text-slate-300 hover:bg-slate-700 rounded-lg font-medium">Cancel</button>
-                    <button onclick="saveEntry()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Save Entry</button>
+
+            <!-- Right Side: Everyone's Status for that day -->
+            <div class="w-full md:w-64 bg-slate-950/50 p-6 flex flex-col">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Party Report</h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-800 transition md:hidden">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white hidden md:block hover:text-red-400 transition">
+                         <i class="fa-solid fa-xmark fa-lg"></i>
+                    </button>
+                </div>
+                
+                <div id="modalDaySummary" class="space-y-3 overflow-y-auto flex-1 max-h-[300px] no-scrollbar">
+                    <!-- Populated by JS -->
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="toastMessage">Saved successfully</span>
+    <!-- Achievements / Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 transform translate-y-32 opacity-0 transition-all duration-500">
+        <div class="bg-slate-800/90 backdrop-blur-md border border-green-500/30 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px] relative overflow-hidden">
+            <div class="absolute inset-0 bg-green-500/5"></div>
+            <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg shrink-0">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-green-400 text-sm uppercase tracking-wide">Success!</h4>
+                <p id="toastMessage" class="text-sm text-slate-200 font-medium">XP Added to your profile.</p>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // TODO: REPLACE WITH YOUR FIREBASE CONFIGURATION
-        // 1. Go to console.firebase.google.com
-        // 2. Create a project
-        // 3. Add a Web App
-        // 4. Copy the config object below
         const firebaseConfig = {
             apiKey: "AIzaSyDUsDIShAvRwd73ag9_uBKmMWzNc6VNIDs",
             authDomain: "familytracker-153b0.firebaseapp.com",
@@ -253,17 +397,20 @@
             measurementId: "G-HDB997HYD5"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const dbRef = ref(db, 'familyTimeTracker');
 
         const USERS = ['Mohammad', 'Fadwa', 'Alia', 'Tasneem'];
-        const DOT_COLORS = { 'Mohammad': 'bg-blue-500', 'Fadwa': 'bg-purple-500', 'Alia': 'bg-pink-500', 'Tasneem': 'bg-emerald-500' };
-        const CHART_COLORS = { 'Mohammad': '#3b82f6', 'Fadwa': '#a855f7', 'Alia': '#ec4899', 'Tasneem': '#10b981' };
+        const USER_CONFIG = {
+            'Mohammad': { color: 'blue', icon: 'fa-shield-halved' },
+            'Fadwa': { color: 'purple', icon: 'fa-wand-magic-sparkles' },
+            'Alia': { color: 'pink', icon: 'fa-heart' },
+            'Tasneem': { color: 'emerald', icon: 'fa-leaf' }
+        };
         const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
-        // Make variables global so HTML handlers can access them
+        // Globals
         const savedUser = localStorage.getItem('familyTracker_currentUser');
         window.currentUser = (savedUser && USERS.includes(savedUser)) ? savedUser : USERS[0];
         window.currentDate = new Date(); 
@@ -271,38 +418,140 @@
         window.appData = {};
         let statsChartInstance = null;
 
-        // Initialize App
+        // --- SOUND ENGINE (Web Audio API) ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playTone(freq, type, duration, delay=0, vol=0.1) {
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+                
+                gain.gain.setValueAtTime(0, this.ctx.currentTime + delay);
+                gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + delay + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(this.ctx.currentTime + delay);
+                osc.stop(this.ctx.currentTime + delay + duration);
+            }
+
+            static playClick() {
+                const s = new SoundEngine();
+                // Short high-pitch blip
+                s.playTone(800, 'sine', 0.1, 0, 0.05);
+            }
+
+            static playSuccess() {
+                const s = new SoundEngine();
+                // Major triad arpeggio
+                s.playTone(523.25, 'sine', 0.3, 0); // C5
+                s.playTone(659.25, 'sine', 0.3, 0.1); // E5
+                s.playTone(783.99, 'sine', 0.6, 0.2); // G5
+            }
+
+            static playLevelUp() {
+                const s = new SoundEngine();
+                // Fanfare
+                [440, 554, 659, 880].forEach((freq, i) => {
+                    s.playTone(freq, 'triangle', 0.5, i * 0.1, 0.1);
+                });
+            }
+
+            static playDelete() {
+                const s = new SoundEngine();
+                s.playTone(150, 'sawtooth', 0.3, 0, 0.05);
+            }
+        }
+        // Expose to window for HTML onclicks
+        window.SoundEngine = SoundEngine;
+
+        // --- GAMIFICATION LOGIC ---
+        function calculateLevel(totalHours) {
+            // 1 Hour = 50 XP
+            // Level formula: Level = floor(sqrt(XP / 100)) + 1
+            const xp = Math.floor(totalHours * 50);
+            const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+            const nextLevelXp = Math.pow(level, 2) * 100;
+            const prevLevelXp = Math.pow(level - 1, 2) * 100;
+            const progress = ((xp - prevLevelXp) / (nextLevelXp - prevLevelXp)) * 100;
+            return { level, xp, progress, nextLevelXp };
+        }
+
+        function getBadges(user, data) {
+            const badges = [];
+            let totalHours = 0;
+            let maxStreak = 0;
+            let currentStreak = 0;
+            let maxDay = 0;
+            const year = new Date().getFullYear();
+
+            // Analyze data
+            const dates = Object.keys(data).sort();
+            dates.forEach((date, i) => {
+                const hrs = parseFloat(data[date].hours);
+                totalHours += hrs;
+                if(hrs > maxDay) maxDay = hrs;
+
+                if (hrs >= 2) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 0;
+                }
+                if (currentStreak > maxStreak) maxStreak = currentStreak;
+            });
+
+            // Badge Rules
+            if (maxStreak >= 3) badges.push({ icon: 'fa-fire', color: 'text-orange-500', title: 'Streak Apprentice (3 Days)' });
+            if (maxStreak >= 7) badges.push({ icon: 'fa-fire-flame-curved', color: 'text-red-500', title: 'Streak Master (7 Days)' });
+            if (totalHours >= 50) badges.push({ icon: 'fa-medal', color: 'text-yellow-400', title: 'Novice (50h)' });
+            if (totalHours >= 100) badges.push({ icon: 'fa-trophy', color: 'text-yellow-500', title: 'Expert (100h)' });
+            if (maxDay >= 8) badges.push({ icon: 'fa-dumbbell', color: 'text-blue-400', title: 'Hard Worker (8h Day)' });
+            if (maxDay >= 10) badges.push({ icon: 'fa-dragon', color: 'text-purple-400', title: 'Beast Mode (10h Day)' });
+
+            return badges;
+        }
+
+        // --- MAIN APP LOGIC ---
+
         function init() {
-            // Initialize empty data structure first
             USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
             
-            // Listen for data changes from Firebase
             onValue(dbRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     window.appData = data;
-                    // Ensure all users exist in data
                     USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
                 } else {
-                    // No data in Firebase, keep default empty structure
                     USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
                 }
                 
-                // Update UI whenever data changes
                 renderCalendar();
                 renderUsersList();
                 
-                // Update active page if needed
                 if(!document.getElementById('statsPage').classList.contains('hidden')) updateStats();
                 if(!document.getElementById('consistencyPage').classList.contains('hidden')) updateConsistency();
             });
 
             updateTodayDisplay();
-            renderCalendar(); // Initial render
+            renderCalendar();
             renderUsersList();
+            
+            // Add global click sound listener for buttons
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if(!btn.onclick) SoundEngine.playClick();
+                });
+            });
         }
 
         window.switchPage = function(page) {
+            SoundEngine.playClick();
             const pages = ['calendar', 'stats', 'consistency'];
             pages.forEach(p => {
                 const btn = document.getElementById(`btn${p.charAt(0).toUpperCase() + p.slice(1)}View`);
@@ -330,41 +579,72 @@
 
             const currentYear = window.currentDate.getFullYear();
             const currentMonth = window.currentDate.getMonth();
-            const goal = 160;
+            const monthlyGoal = 160;
 
             USERS.forEach(user => {
                 let mTotal = 0;
+                let allTimeTotal = 0;
+                
                 if (window.appData[user]) {
                     for (const [key, val] of Object.entries(window.appData[user])) {
                         const d = new Date(key);
+                        const h = parseFloat(val.hours);
+                        allTimeTotal += h;
                         if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-                            mTotal += parseFloat(val.hours);
+                            mTotal += h;
                         }
                     }
                 }
 
+                // Gamification Calcs
+                const stats = calculateLevel(allTimeTotal);
+                const badges = getBadges(user, window.appData[user] || {});
                 const isActive = user === window.currentUser;
-                const percent = Math.min(100, Math.round((mTotal / goal) * 100));
-                let barColor = user === 'Mohammad' ? "bg-blue-600" : (user === 'Fadwa' ? "bg-purple-600" : (user === 'Alia' ? "bg-pink-600" : "bg-emerald-600"));
-
+                const config = USER_CONFIG[user];
+                
+                // Card HTML
                 const div = document.createElement('div');
-                div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isActive ? 'active border-blue-500' : 'border-transparent bg-slate-800/40'}`;
+                div.className = `user-card p-4 rounded-2xl cursor-pointer relative overflow-hidden ${isActive ? 'active' : 'bg-slate-800/40 border-slate-700/30'}`;
                 div.onclick = () => { 
+                    SoundEngine.playClick();
                     window.currentUser = user; 
                     localStorage.setItem('familyTracker_currentUser', user);
                     renderUsersList(); 
                     renderCalendar(); 
                 };
+
                 div.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-sm">${user.charAt(0)}</span>
-                            <span class="font-bold text-slate-100">${user}</span>
+                    <div class="flex items-center justify-between mb-3 relative z-10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-${config.color}-600 flex items-center justify-center text-white shadow-lg relative">
+                                <i class="fa-solid ${config.icon} text-xl"></i>
+                                <div class="absolute -bottom-2 -right-2 bg-yellow-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow border border-slate-900">Lvl ${stats.level}</div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white leading-tight">${user}</h4>
+                                <div class="text-[10px] text-${config.color}-400 font-bold uppercase tracking-wider">${stats.xp} XP</div>
+                            </div>
                         </div>
-                        <span class="text-xl font-bold">${mTotal}h</span>
+                        <div class="text-right">
+                            <span class="text-2xl font-black text-white">${mTotal}<span class="text-sm text-slate-500 font-medium">h</span></span>
+                            <div class="text-[10px] text-slate-500">Monthly</div>
+                        </div>
                     </div>
-                    <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                        <div class="${barColor} h-full" style="width: ${percent}%"></div>
+                    
+                    <div class="relative z-10 space-y-2">
+                        <!-- XP Bar -->
+                        <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+                            <span>Level Progress</span>
+                            <span>${Math.round(stats.progress)}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden xp-bar-bg">
+                            <div class="h-full xp-bar-fill w-0" style="background: ${isActive ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)' : '#64748b'}; width: ${stats.progress}%"></div>
+                        </div>
+
+                        <!-- Badges Row -->
+                        <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar py-1">
+                            ${badges.length > 0 ? badges.map(b => `<i class="fa-solid ${b.icon} ${b.color} badge-icon" title="${b.title}"></i>`).join('') : '<span class="text-[10px] text-slate-600 italic">No badges yet...</span>'}
+                        </div>
                     </div>
                 `;
                 listContainer.appendChild(div);
@@ -380,16 +660,25 @@
             const userEntries = Object.entries(window.appData[window.currentUser])
                 .map(([k, v]) => ({ date: k, ...v }))
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 3);
+                .slice(0, 4);
 
             if (userEntries.length === 0) {
-                recentContainer.innerHTML = `<p class="text-slate-500 italic text-xs">No entries for ${window.currentUser}.</p>`;
+                recentContainer.innerHTML = `<div class="text-center py-4 text-slate-600"><i class="fa-regular fa-clipboard mb-2 block text-2xl"></i><span class="text-xs">No quests completed yet.</span></div>`;
             } else {
                 userEntries.forEach(entry => {
+                    const d = new Date(entry.date);
                     recentContainer.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-900/50 p-2 rounded border border-slate-700/50">
-                            <span class="text-slate-400 text-xs">${new Date(entry.date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}</span>
-                            <span class="text-white font-medium text-xs">${entry.hours}h</span>
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-slate-700 w-8 h-8 rounded-lg flex items-center justify-center text-xs text-slate-400 font-bold">
+                                    ${d.getDate()}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-slate-300 text-xs font-bold">${d.toLocaleDateString('en-US', {month:'short'})}</span>
+                                    <span class="text-slate-500 text-[10px] truncate max-w-[100px]">${entry.notes || 'Work'}</span>
+                                </div>
+                            </div>
+                            <span class="text-blue-400 font-black text-sm">+${Math.floor(entry.hours * 50)} XP</span>
                         </div>
                     `;
                 });
@@ -407,6 +696,7 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const startingDay = firstDay.getDay();
 
+            // Empty slots
             for (let i = 0; i < startingDay; i++) {
                 grid.appendChild(document.createElement('div'));
             }
@@ -416,29 +706,36 @@
                 const dateKey = formatDateKey(dateObj);
                 const isToday = dateKey === formatDateKey(new Date());
 
-                let indicatorsHtml = '';
+                let dotsHtml = '';
+                let mainUserHours = 0;
+
                 USERS.forEach(user => {
                     const entry = window.appData[user] ? window.appData[user][dateKey] : null;
                     if (entry) {
-                        const barWidth = Math.min(100, (entry.hours / 10) * 100);
-                        const isSelected = user === window.currentUser;
-                        indicatorsHtml += `
-                            <div class="${DOT_COLORS[user]} ${isSelected ? '' : 'opacity-80'} text-white text-[9px] px-1.5 py-0.5 rounded flex justify-between items-center mb-0.5" style="width: ${Math.max(25, barWidth)}%">
-                                <span>${user.charAt(0)}</span><span>${entry.hours}h</span>
-                            </div>`;
+                        const config = USER_CONFIG[user];
+                        // FIXED: Removed opacity-40 grayscale to make all dots visible
+                        const opacity = user === window.currentUser ? 'opacity-100 ring-1 ring-white/50' : 'opacity-100'; 
+                        dotsHtml += `<div class="w-2 h-2 rounded-full bg-${config.color}-500 ${opacity}" title="${user}: ${entry.hours}h"></div>`;
+                        if(user === window.currentUser) mainUserHours = entry.hours;
                     }
                 });
 
+                const completedStyle = mainUserHours >= 8 ? 'bg-slate-800 border-green-500/50' : (mainUserHours > 0 ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-900/50 border-slate-800');
+                const todayStyle = isToday ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/20' : '';
+
                 const dayEl = document.createElement('div');
-                dayEl.className = `calendar-day rounded-lg p-2 cursor-pointer flex flex-col justify-between bg-slate-800 border border-slate-700 hover:border-slate-500 ${isToday ? 'ring-2 ring-blue-500 z-10' : ''}`;
+                dayEl.className = `calendar-day rounded-xl p-2 cursor-pointer flex flex-col justify-between border ${completedStyle} ${todayStyle}`;
                 dayEl.innerHTML = `
-                    <div class="text-xs font-semibold flex justify-between items-center mb-1">
-                        <span class="${isToday ? 'text-blue-400 font-bold' : 'text-slate-500'}">${d}</span>
-                        ${isToday ? '<span class="text-[8px] bg-blue-600 text-white px-1.5 rounded-full uppercase">Today</span>' : ''}
+                    <div class="flex justify-between items-start">
+                        <span class="${isToday ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold' : 'text-slate-500 text-xs font-bold'}">${d}</span>
+                        ${mainUserHours > 0 ? `<span class="text-[10px] font-black text-white bg-slate-700/50 px-1.5 rounded">${mainUserHours}h</span>` : ''}
                     </div>
-                    <div class="flex flex-col w-full mt-auto overflow-hidden">${indicatorsHtml}</div>
+                    <div class="flex gap-1 flex-wrap mt-2 content-end">${dotsHtml}</div>
                 `;
-                dayEl.onclick = () => openLogModal(dateObj);
+                dayEl.onclick = () => {
+                    SoundEngine.playClick();
+                    openLogModal(dateObj);
+                };
                 grid.appendChild(dayEl);
             }
         }
@@ -448,89 +745,113 @@
             const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             
-            document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} ${year} Statistics`;
+            document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} Stats`;
             
             let userTotals = {};
-            let userLogDays = {}; 
+            let userXP = {};
+            let userDays = {};
             
             USERS.forEach(user => {
                 let uSum = 0;
-                let logCount = 0;
+                let dCount = 0;
                 if (window.appData[user]) {
                     for (const [key, val] of Object.entries(window.appData[user])) {
                         const d = new Date(key);
                         if (d.getMonth() === month && d.getFullYear() === year) {
-                            const hrs = parseFloat(val.hours);
-                            uSum += hrs;
-                            if (hrs > 0) logCount++;
+                            uSum += parseFloat(val.hours);
+                            if(parseFloat(val.hours) > 0) dCount++;
                         }
                     }
                 }
                 userTotals[user] = uSum;
-                userLogDays[user] = logCount;
+                userXP[user] = uSum * 50;
+                userDays[user] = dCount;
             });
 
             const avgGrid = document.getElementById('personAvgGrid');
             avgGrid.innerHTML = '';
             USERS.forEach(user => {
-                const avg = (userTotals[user] / daysInMonth).toFixed(1);
+                const config = USER_CONFIG[user];
+                // Added Avg back
+                const avg = userDays[user] > 0 ? (userTotals[user] / userDays[user]).toFixed(1) : 0;
+                
                 avgGrid.innerHTML += `
-                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl border-l-4 ${user === 'Mohammad' ? 'border-l-blue-500' : (user === 'Fadwa' ? 'border-l-purple-500' : (user === 'Alia' ? 'border-l-pink-500' : 'border-l-emerald-500'))}">
-                        <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">${user}'s Daily Average</h3>
-                        <div class="text-3xl font-bold text-white">${avg}h</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Across all ${daysInMonth} days</div>
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-${config.color}-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">${user}</h3>
+                        <div class="text-3xl font-black text-white">${userTotals[user]}<span class="text-sm font-medium text-slate-500">h</span></div>
+                        <div class="flex justify-between items-end mt-2">
+                             <div class="text-xs font-bold text-${config.color}-400">+${userXP[user]} XP</div>
+                             <div class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">Avg: ${avg}h</div>
+                        </div>
                     </div>
                 `;
             });
 
-            const sorted = Object.entries(userTotals).sort((a,b) => b[1] - a[1]);
+            const sorted = Object.entries(userXP).sort((a,b) => b[1] - a[1]);
             document.getElementById('statTopPerformer').innerText = sorted[0][1] > 0 ? sorted[0][0] : '-';
 
             const leaderboard = document.getElementById('statsLeaderboard');
             leaderboard.innerHTML = '';
-            sorted.forEach(([user, hrs], idx) => {
+            sorted.forEach(([user, xp], idx) => {
+                const config = USER_CONFIG[user];
+                const rankColor = idx === 0 ? 'text-yellow-400' : (idx === 1 ? 'text-slate-300' : 'text-orange-700');
+                const trophy = idx === 0 ? '<i class="fa-solid fa-trophy"></i>' : `#${idx+1}`;
+                
                 leaderboard.innerHTML += `
-                    <div class="bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-700">
+                    <div class="bg-slate-800/40 p-4 rounded-xl flex items-center justify-between border border-slate-700/50">
                         <div class="flex items-center gap-4">
-                            <span class="text-xl font-bold text-slate-600 italic">#${idx + 1}</span>
-                            <div class="w-10 h-10 rounded-full ${DOT_COLORS[user]} flex items-center justify-center font-bold text-white shadow-lg">${user.charAt(0)}</div>
-                            <span class="font-bold text-slate-200">${user}</span>
+                            <span class="text-xl font-black ${rankColor} w-8 text-center">${trophy}</span>
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-${config.color}-500/20 text-${config.color}-400 flex items-center justify-center"><i class="fa-solid ${config.icon}"></i></div>
+                                <span class="font-bold text-slate-200">${user}</span>
+                            </div>
                         </div>
-                        <span class="text-2xl font-black text-white">${hrs}h</span>
+                        <span class="text-xl font-black text-white">${xp} <span class="text-[10px] text-slate-500 uppercase">XP</span></span>
                     </div>
                 `;
             });
 
+            // Chart Logic
             const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
             const datasets = USERS.map(user => {
+                const config = USER_CONFIG[user];
+                let accumXP = 0;
                 const data = labels.map(day => {
                     const key = formatDateKey(new Date(year, month, day));
-                    return window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
+                    const h = window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
+                    accumXP += (h * 50); // Accumulative XP graph
+                    return accumXP;
                 });
                 return {
                     label: user,
                     data: data,
-                    borderColor: CHART_COLORS[user],
-                    backgroundColor: CHART_COLORS[user] + '20',
-                    fill: false,
-                    tension: 0.3,
-                    borderWidth: 2,
-                    pointRadius: 1
+                    borderColor: getComputedStyle(document.documentElement).getPropertyValue(`--color-${config.color}-500`) || config.color, // Simplified color fallback
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    tension: 0.4
                 };
             });
 
             const ctx = document.getElementById('statsChart').getContext('2d');
             if (statsChartInstance) statsChartInstance.destroy();
+            
+            // Custom colors for chart since tailwind classes aren't avail in JS context directly easily
+            const colorsMap = { 'Mohammad': '#2563eb', 'Fadwa': '#9333ea', 'Alia': '#db2777', 'Tasneem': '#059669' };
+            datasets.forEach(d => d.borderColor = colorsMap[d.label]);
+
             statsChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: '#f1f5f9', font: { size: 10 } } } },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: {family: 'Outfit'} } } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#1e293b' }, ticks: { color: '#64748b' }, title: { display: true, text: 'Hours', color: '#64748b'} },
-                        x: { grid: { display: false }, ticks: { color: '#64748b' }, title: { display: true, text: 'Day of Month', color: '#64748b'} }
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } }
                     }
                 }
             });
@@ -542,18 +863,19 @@
             const month = window.currentDate.getMonth();
             const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const minHours = 2;
+            const todayDate = new Date().getDate();
 
             USERS.forEach(user => {
                 let consistentDays = 0;
                 let currentStreak = 0;
                 let maxStreak = 0;
                 let history = [];
+                const config = USER_CONFIG[user];
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const key = formatDateKey(new Date(year, month, d));
                     const hrs = window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
-                    const isConsistent = hrs >= minHours;
+                    const isConsistent = hrs >= 2;
                     
                     history.push(isConsistent);
                     if (isConsistent) {
@@ -564,40 +886,38 @@
                         currentStreak = 0;
                     }
                 }
-
-                const reliability = Math.round((consistentDays / daysInMonth) * 100);
-                const colorClass = user === 'Mohammad' ? 'text-blue-500' : (user === 'Fadwa' ? 'text-purple-500' : (user === 'Alia' ? 'text-pink-500' : 'text-emerald-500'));
-                const bgClass = user === 'Mohammad' ? 'bg-blue-500' : (user === 'Fadwa' ? 'bg-purple-500' : (user === 'Alia' ? 'bg-pink-500' : 'bg-emerald-500'));
+                
+                // Added Reliability and Consistent Days
+                const reliability = Math.round((consistentDays / todayDate) * 100);
 
                 grid.innerHTML += `
-                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full ${bgClass} flex items-center justify-center font-bold text-white">${user.charAt(0)}</div>
-                                <h4 class="font-bold text-slate-100">${user}</h4>
-                            </div>
+                    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                            <i class="fa-solid ${config.icon} text-6xl text-${config.color}-500"></i>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-6">
+                            <h4 class="font-black text-xl text-white">${user}</h4>
                             <div class="text-right">
-                                <div class="text-sm text-slate-400 uppercase font-bold tracking-tighter">Reliability</div>
-                                <div class="text-xl font-black ${colorClass}">${reliability}%</div>
+                                <div class="text-[10px] text-slate-500 uppercase font-bold">Max Streak</div>
+                                <div class="text-2xl font-black text-${config.color}-400">${maxStreak} <span class="text-sm text-slate-500">days</span></div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                <div class="text-[10px] text-slate-500 uppercase font-bold">Consist. Days</div>
-                                <div class="text-lg font-bold text-white">${consistentDays} / ${daysInMonth}</div>
+                            <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold">Reliability</div>
+                                <div class="text-lg font-bold text-white">${reliability}%</div>
                             </div>
-                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                <div class="text-[10px] text-slate-500 uppercase font-bold">Longest Streak</div>
-                                <div class="text-lg font-bold text-white">${maxStreak} Days</div>
+                            <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold">Consistent</div>
+                                <div class="text-lg font-bold text-white">${consistentDays} <span class="text-xs text-slate-400">days</span></div>
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap gap-1.5">
+                        <div class="flex gap-1 flex-wrap">
                             ${history.map((isOk, idx) => `
-                                <div class="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold ${isOk ? bgClass + ' text-white' : 'bg-slate-700 text-slate-500'}" title="Day ${idx+1}">
-                                    ${idx+1}
-                                </div>
+                                <div class="w-2.5 h-4 rounded-sm ${isOk ? `bg-${config.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.5)] shadow-${config.color}-500/50` : 'bg-slate-800'} transition-all hover:scale-125" title="Day ${idx+1}"></div>
                             `).join('')}
                         </div>
                     </div>
@@ -606,6 +926,7 @@
         }
 
         window.changeMonth = function(delta) {
+            SoundEngine.playClick();
             window.currentDate.setMonth(window.currentDate.getMonth() + delta);
             renderCalendar();
             renderUsersList();
@@ -618,8 +939,9 @@
             const dateKey = formatDateKey(date);
             const entry = window.appData[window.currentUser] ? window.appData[window.currentUser][dateKey] : null;
             document.getElementById('modalUserName').innerText = window.currentUser;
-            document.getElementById('modalDateDisplay').innerText = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('modalDateDisplay').innerText = date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
             
+            // Populate Input Form
             if (entry) {
                 document.getElementById('hoursInput').value = entry.hours;
                 document.getElementById('notesInput').value = entry.notes || '';
@@ -629,6 +951,46 @@
                 document.getElementById('notesInput').value = '';
                 document.getElementById('deleteBtn').classList.add('hidden');
             }
+
+            // --- POPULATE PARTY SUMMARY ---
+            const summaryContainer = document.getElementById('modalDaySummary');
+            summaryContainer.innerHTML = '';
+            
+            let hasEntries = false;
+            USERS.forEach(user => {
+                const uEntry = window.appData[user] ? window.appData[user][dateKey] : null;
+                const config = USER_CONFIG[user];
+                if(uEntry) {
+                    hasEntries = true;
+                    summaryContainer.innerHTML += `
+                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-${config.color}-600 text-white flex items-center justify-center shadow-lg">
+                                    <i class="fa-solid ${config.icon} text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-white">${user}</div>
+                                    <div class="text-[10px] text-slate-400 truncate w-20">${uEntry.notes || 'No notes'}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-white text-sm">${uEntry.hours}h</div>
+                                <div class="text-[9px] text-${config.color}-400 font-bold">+${Math.floor(uEntry.hours*50)} XP</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (!hasEntries) {
+                summaryContainer.innerHTML = `
+                    <div class="text-center py-8 opacity-50">
+                        <i class="fa-solid fa-ghost text-4xl mb-2 text-slate-600"></i>
+                        <p class="text-xs text-slate-500">No activity logged by anyone yet.</p>
+                    </div>
+                `;
+            }
+
             document.getElementById('logModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('logModal').classList.remove('opacity-0'), 10);
         }
@@ -638,7 +1000,10 @@
             setTimeout(() => document.getElementById('logModal').classList.add('hidden'), 300);
         }
 
-        window.setHours = function(h) { document.getElementById('hoursInput').value = h; }
+        window.setHours = function(h) { 
+            SoundEngine.playClick();
+            document.getElementById('hoursInput').value = h; 
+        }
 
         window.saveEntry = function() {
             const hours = parseFloat(document.getElementById('hoursInput').value);
@@ -653,35 +1018,54 @@
                 }
             } else { 
                 window.appData[window.currentUser][dateKey] = { hours, notes }; 
+                
+                // --- GAMIFICATION EFFECTS ---
+                SoundEngine.playSuccess();
+                
+                // Floating Text Effect
+                const btn = document.activeElement;
+                if(btn) {
+                    const rect = btn.getBoundingClientRect();
+                    const floatEl = document.createElement('div');
+                    floatEl.className = 'floating-xp';
+                    floatEl.innerText = `+${Math.floor(hours * 50)} XP`;
+                    floatEl.style.left = `${rect.left + rect.width/2}px`;
+                    floatEl.style.top = `${rect.top}px`;
+                    document.body.appendChild(floatEl);
+                    setTimeout(() => floatEl.remove(), 1000);
+                }
+
+                // Confetti if hours > 4
+                if (hours >= 4) {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#3b82f6', '#8b5cf6', '#fbbf24']
+                    });
+                }
             }
             saveToStorage();
             closeModal();
-            showToast("Hours saved!");
+            showToast(`Quest Complete! ${hours} hours logged.`);
         }
 
         window.deleteEntry = function() {
+            SoundEngine.playDelete();
             const dateKey = formatDateKey(window.selectedDateForModal);
             if (window.appData[window.currentUser] && window.appData[window.currentUser][dateKey]) {
                 delete window.appData[window.currentUser][dateKey];
                 saveToStorage();
             }
             closeModal();
-            showToast("Entry deleted.");
+            showToast("Quest Abandoned (Entry deleted)");
         }
 
-        // Modified to save to Firebase
         function saveToStorage() {
-            // localStorage.setItem('familyTimeTracker', JSON.stringify(appData));
             set(dbRef, window.appData)
-                .then(() => {
-                    console.log("Data saved to Firebase");
-                })
-                .catch((error) => {
-                    console.error("Error saving to Firebase:", error);
-                    showToast("Error saving to cloud!");
-                });
+                .then(() => console.log("Synced"))
+                .catch((e) => console.error(e));
             
-            // Optimistic update
             renderCalendar();
             renderUsersList();
         }
@@ -690,7 +1074,7 @@
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appData));
             const dl = document.createElement('a');
             dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", "family_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            dl.setAttribute("download", "family_rpg_backup_" + new Date().toISOString().slice(0,10) + ".json");
             dl.click();
         }
 
@@ -701,7 +1085,8 @@
             reader.onload = (e) => {
                 window.appData = JSON.parse(e.target.result);
                 saveToStorage();
-                showToast("Restored & Synced!");
+                showToast("Save file loaded!");
+                SoundEngine.playLevelUp();
             };
             reader.readAsText(file);
         }
@@ -709,8 +1094,8 @@
         window.showToast = function(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMessage').innerText = msg;
-            t.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+            t.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
         }
 
         function formatDateKey(date) {
@@ -720,7 +1105,7 @@
         }
 
         function updateTodayDisplay() {
-            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         }
 
         window.addEventListener('DOMContentLoaded', init);
