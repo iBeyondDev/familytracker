@@ -11,159 +11,186 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
 
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #0b1120; /* Deep RPG Dark */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 25%);
             color: #e2e8f0;
-            user-select: none;
+            user-select: none; /* Game-like feel */
         }
 
-        /* Gamified Element */
-        .level-badge {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
         }
         
-        .xp-bar-bg {
-            background: rgba(255,255,255,0.1);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .xp-bar-fill {
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
         }
 
-        /* Calendar Styling */
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Calendar & Grid */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 6px;
         }
         .calendar-day {
-            min-height: 100px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 110px;
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover:not(.empty) {
+            background: rgba(51, 65, 85, 0.6);
+            z-index: 10;
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* RPG Elements */
+        .xp-bar-container {
+            background: rgba(15, 23, 42, 0.6);
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .xp-bar-fill {
+            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             overflow: hidden;
         }
-        .calendar-day:hover:not(.empty) {
-            transform: translateY(-2px);
-            background-color: #1e293b;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border-color: #60a5fa;
-            z-index: 10;
-        }
-        .calendar-day:active {
-            transform: scale(0.98);
+        
+        /* Shimmer effect for XP bar */
+        .xp-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.2) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        .user-card.active {
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
         /* Animations */
+        @keyframes levelUpPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .level-badge {
+            animation: levelUpPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .floating-xp {
-            position: absolute;
-            color: #fbbf24;
-            font-weight: 800;
-            pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
-            z-index: 50;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-30px) scale(1.2); opacity: 0; }
-        }
-
-        .user-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 2px solid transparent;
-        }
-        .user-card:hover {
-            transform: translateY(-2px);
-            background-color: #1e293b;
-        }
-        .user-card.active {
-            border-color: #60a5fa;
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
-        }
-
-        .nav-btn { position: relative; overflow: hidden; }
-        .nav-btn::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; width: 0%; height: 2px;
-            background: #60a5fa;
-            transition: width 0.3s ease;
-        }
-        .nav-btn.active::after { width: 100%; }
-        .nav-btn.active { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
         
-        .badge-icon {
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            transition: transform 0.2s;
-        }
-        .badge-icon:hover { transform: scale(1.2) rotate(10deg); }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .nav-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        }
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #60a5fa;
+            box-shadow: 0 0 10px #60a5fa;
+        }
     </style>
 </head>
 
-<body class="h-screen flex flex-col overflow-hidden text-slate-200">
+<body class="h-screen flex flex-col overflow-hidden text-slate-100 selection:bg-blue-500/30">
 
     <!-- Header -->
-    <header class="bg-slate-900/80 backdrop-blur-md shadow-lg z-30 shrink-0 border-b border-slate-800">
+    <header class="glass-panel z-20 shrink-0 border-b border-white/5 relative">
+        <!-- Top accent line -->
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+        
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div class="flex items-center gap-3 group cursor-pointer" onclick="SoundEngine.playClick()">
-                <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-900/50 group-hover:scale-105 transition-transform duration-300">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-blue-900/40 border border-white/10">
                     <i class="fa-solid fa-gamepad fa-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-white tracking-tight">Level Up <span class="text-blue-500">Life</span></h1>
-                    <p class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Family Tracker v2.1</p>
+                    <h1 class="text-2xl font-bold tracking-tight text-white neon-text">RPG Tracker <span class="text-blue-400 font-light">2026</span></h1>
+                    <p class="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Family Quest System</p>
                 </div>
             </div>
 
-            <!-- Gamified Nav -->
-            <div class="flex bg-slate-950/50 p-1.5 rounded-2xl border border-slate-800 backdrop-blur-sm">
-                <button id="btnCalendarView" onclick="switchPage('calendar')" class="nav-btn active px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-days"></i> Quests
+            <!-- Page Switcher -->
+            <div class="flex bg-slate-900/50 p-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
+                <button id="btnCalendarView" onclick="playSound('click'); switchPage('calendar')" class="nav-btn active px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-sm"></i> Calendar
                 </button>
-                <button id="btnStatsView" onclick="switchPage('stats')" class="nav-btn px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-chart-simple"></i> Stats
+                <button id="btnStatsView" onclick="playSound('click'); switchPage('stats')" class="nav-btn px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-chart-pie text-sm"></i> Stats
                 </button>
-                <button id="btnConsistencyView" onclick="switchPage('consistency')" class="nav-btn px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-fire"></i> Streaks
+                <button id="btnConsistencyView" onclick="playSound('click'); switchPage('consistency')" class="nav-btn px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-fire text-sm"></i> Streaks
                 </button>
             </div>
 
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg transition border border-slate-700 hover:border-slate-500">
-                    <i class="fa-solid fa-save mr-1"></i> SAVE
+            <div class="flex gap-3">
+                <button onclick="playSound('click'); exportData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition border border-white/10 flex items-center gap-2 font-medium">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hidden sm:inline">Backup</span>
                 </button>
-                <label class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg transition cursor-pointer border border-slate-700 hover:border-slate-500">
-                    <i class="fa-solid fa-upload mr-1"></i> LOAD
+                <label class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition border border-white/10 flex items-center gap-2 cursor-pointer font-medium hover:text-white">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">Restore</span>
                     <input type="file" id="importFile" class="hidden" onchange="importData(this)">
                 </label>
             </div>
@@ -171,118 +198,105 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-auto bg-[#0b1120] p-3 sm:p-6 relative">
-        <!-- Background Ambient Effect -->
-        <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none"></div>
+    <main class="flex-1 overflow-auto p-4 sm:p-6 relative">
+        
+        <!-- Background decorative elements -->
+        <div class="absolute top-20 left-10 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-            <!-- Left Column: Calendar (8 cols) -->
-            <div class="lg:col-span-8 space-y-6">
+        <div id="calendarPage" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+            <!-- Left Column: Calendar -->
+            <div class="lg:col-span-2 space-y-6">
                 <!-- Month Navigation -->
-                <div class="bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-800 p-4 flex justify-between items-center sticky top-0 z-20">
-                    <button onclick="changeMonth(-1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-700">
+                <div class="glass-panel rounded-2xl p-4 flex justify-between items-center sticky top-0 z-10">
+                    <button onclick="playSound('click'); changeMonth(-1)" class="w-10 h-10 rounded-xl hover:bg-white/5 transition flex items-center justify-center text-slate-400 hover:text-white border border-transparent hover:border-white/10">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
-                    <div class="text-center">
-                        <h2 class="text-2xl font-black text-white tracking-tight" id="currentMonthDisplay">Month 2026</h2>
-                        <div class="text-xs text-blue-400 font-bold tracking-widest uppercase mt-1">Quest Log</div>
-                    </div>
-                    <button onclick="changeMonth(1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-700">
+                    <h2 class="text-2xl font-bold w-48 text-center text-white tracking-tight" id="currentMonthDisplay">Month 2026</h2>
+                    <button onclick="playSound('click'); changeMonth(1)" class="w-10 h-10 rounded-xl hover:bg-white/5 transition flex items-center justify-center text-slate-400 hover:text-white border border-transparent hover:border-white/10">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
 
                 <!-- Calendar Grid -->
-                <div class="bg-slate-900/60 rounded-2xl shadow-2xl border border-slate-800 p-4 fade-in backdrop-blur-sm">
-                    <div class="grid grid-cols-7 gap-4 mb-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <div class="glass-panel rounded-2xl p-5 fade-in">
+                    <div class="grid grid-cols-7 gap-4 mb-4 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                     </div>
-                    <div id="calendarGrid" class="calendar-grid bg-slate-950/50 rounded-xl p-2 border border-slate-800/50"></div>
+                    <div id="calendarGrid" class="calendar-grid"></div>
                 </div>
 
-                <!-- Action Bar -->
-                <div class="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-wrap gap-4 items-center justify-between shadow-lg">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-blue-500/10 p-3 rounded-full text-blue-400">
-                            <i class="fa-regular fa-calendar-check fa-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-lg">Today's Mission</h3>
-                            <p class="text-xs text-slate-400 font-mono" id="todayDateDisplay"></p>
-                        </div>
+                <!-- Quick Action Bar -->
+                <div class="glass-card rounded-2xl p-5 flex items-center justify-between border-l-4 border-blue-500">
+                    <div>
+                        <h3 class="font-bold text-slate-200">Mission Control</h3>
+                        <p class="text-xs text-slate-400 mt-0.5" id="todayDateDisplay"></p>
                     </div>
-                    <button onclick="openLogModal(new Date())" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-900/30 transition transform hover:-translate-y-0.5 font-bold border-t border-blue-400 flex items-center gap-3 group">
-                        <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform"></i>
-                        <span>Log Hours for <span id="btnUserName" class="underline decoration-dashed underline-offset-4">Mohammad</span></span>
+                    <button onclick="playSound('click'); openLogModal(new Date())" class="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:scale-105 font-semibold flex items-center gap-2 border border-white/10">
+                        <i class="fa-solid fa-plus-circle"></i> Log Quest for <span id="btnUserName">User</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Right Column: Family Dashboard (4 cols) -->
-            <div class="lg:col-span-4 space-y-6 flex flex-col h-full">
-                <div class="bg-slate-900/90 rounded-2xl shadow-xl border border-slate-800 p-5 flex flex-col h-full backdrop-blur-md">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="font-black text-lg text-white flex items-center gap-2">
-                            <i class="fa-solid fa-users-viewfinder text-blue-500"></i> 
-                            Party Members
-                        </h3>
-                        <span class="text-xs font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700">LVL & XP</span>
-                    </div>
+            <!-- Right Column: Family Dashboard -->
+            <div class="space-y-6 h-full flex flex-col">
+                <div class="glass-panel rounded-2xl p-6 flex flex-col h-full overflow-hidden">
+                    <h3 class="font-bold text-lg mb-5 text-white flex items-center gap-3">
+                        <i class="fa-solid fa-users-viewfinder text-blue-400"></i> Active Players
+                    </h3>
+                    <div id="usersList" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-1"></div>
                     
-                    <div id="usersList" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-1"></div>
-                    
-                    <div class="mt-6 pt-6 border-t border-slate-800">
-                         <h4 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Recent Activity
-                         </h4>
-                         <div id="recentEntries" class="space-y-3"></div>
+                    <div class="mt-6 pt-6 border-t border-white/5">
+                         <h4 class="text-[10px] font-bold text-slate-500 mb-4 uppercase tracking-widest">Quest Log</h4>
+                         <div id="recentEntries" class="space-y-2.5"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Statistics Page -->
-        <div id="statsPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <h2 class="text-3xl font-black text-white mb-2 tracking-tight" id="statsMonthTitle">Month Statistics</h2>
+        <div id="statsPage" class="max-w-7xl mx-auto hidden fade-in space-y-6 relative z-10">
+            <h2 class="text-3xl font-bold text-white mb-2" id="statsMonthTitle">Month Statistics</h2>
             
             <div id="personAvgGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="lg:col-span-1 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-center relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <h3 class="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-trophy"></i> MVP of the Month
-                    </h3>
-                    <div class="relative z-10">
-                        <div class="text-4xl font-black text-white" id="statTopPerformer">-</div>
-                        <div class="text-xs text-slate-400 mt-2 font-medium">Highest XP Contribution</div>
+                <div class="lg:col-span-1 glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-yellow-500/10 group-hover:text-yellow-500/20 transition-all duration-500 transform group-hover:rotate-12">
+                        <i class="fa-solid fa-trophy text-9xl"></i>
                     </div>
-                    <i class="fa-solid fa-crown absolute bottom-4 right-4 text-6xl text-slate-800/50 rotate-12"></i>
+                    <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 z-10">Monthly MVP</h3>
+                    <div class="z-10">
+                        <div class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600" id="statTopPerformer">-</div>
+                        <div class="text-xs text-slate-500 mt-2 font-medium">Highest XP gained this month</div>
+                    </div>
                 </div>
 
-                <div class="lg:col-span-3 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">XP Gain Over Time</h3>
+                <div class="lg:col-span-3 glass-panel p-6 rounded-2xl">
+                    <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4">XP Acquisition Rate</h3>
                     <div class="h-64">
                         <canvas id="statsChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Leaderboard Rankings</h3>
+            <div class="glass-panel p-6 rounded-2xl">
+                <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">Leaderboard Rankings</h3>
                 <div id="statsLeaderboard" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
         <!-- Consistency Page -->
-        <div id="consistencyPage" class="max-w-7xl mx-auto hidden fade-in space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-end gap-4 border-b border-slate-800 pb-6">
-                <div>
-                    <h2 class="text-3xl font-black text-white tracking-tight">Consistency Streaks</h2>
-                    <p class="text-slate-400 text-sm mt-2 font-medium">Build your combo multiplier! <span class="text-blue-400 font-bold bg-blue-400/10 px-2 py-0.5 rounded">≥ 2h daily</span> maintains streak.</p>
-                </div>
-                <div class="text-right hidden sm:block">
-                    <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">COMBO!</div>
+        <div id="consistencyPage" class="max-w-7xl mx-auto hidden fade-in space-y-6 relative z-10">
+            <div class="glass-panel p-8 rounded-2xl bg-gradient-to-r from-slate-800/80 to-slate-900/80 border border-white/10">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-orange-500/10 rounded-xl text-orange-500 border border-orange-500/20">
+                        <i class="fa-solid fa-fire text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">Consistency Streaks</h2>
+                        <p class="text-slate-400 text-sm font-medium">Daily Quest: Log <span class="text-blue-400 font-bold">≥ 2h</span> to maintain streak.</p>
+                    </div>
                 </div>
             </div>
 
@@ -293,92 +307,59 @@
     </main>
 
     <!-- Modal for Logging Hours -->
-    <div id="logModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl mx-4 transform scale-95 transition-transform duration-300 border border-slate-700 relative overflow-hidden flex flex-col md:flex-row" id="logModalContent">
-            <!-- Modal glow effect -->
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-            
-            <!-- Left Side: Input Form -->
-            <div class="flex-1 p-6 space-y-6 border-r border-slate-800">
-                <div class="flex justify-between items-center mb-2">
-                    <div>
-                        <h3 class="text-xl font-bold text-white">Log Activity</h3>
-                        <p class="text-xs text-blue-400 font-bold mt-1 uppercase tracking-wider">Player: <span id="modalUserName" class="text-white">Mohammad</span></p>
-                    </div>
-                </div>
-
+    <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="glass-panel rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-300 border border-white/10" id="logModalContent">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quest Date</label>
-                    <div class="text-lg font-bold text-slate-200 bg-slate-950/50 px-4 py-3 rounded-xl border border-slate-800 flex items-center gap-3">
-                        <i class="fa-regular fa-calendar text-slate-400"></i>
-                        <span id="modalDateDisplay"></span>
-                    </div>
+                    <h3 class="text-lg font-bold text-white">Log Quest Data</h3>
+                    <p class="text-xs text-blue-400 font-medium mt-0.5 uppercase tracking-wide">Player: <span id="modalUserName">User</span></p>
                 </div>
-                
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mission Date</label>
+                    <div class="text-lg font-medium text-slate-200 bg-slate-900/50 px-4 py-3 rounded-xl border border-white/5" id="modalDateDisplay"></div>
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Duration (Hours)</label>
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <button onclick="setHours(4)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-blue-600 hover:border-blue-500 hover:text-white text-slate-300 transition font-bold text-xs group">
-                            4h
-                        </button>
-                        <button onclick="setHours(8)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-purple-600 hover:border-purple-500 hover:text-white text-slate-300 transition font-bold text-xs group">
-                            8h
-                        </button>
-                        <button onclick="setHours(10)" class="py-2 border border-slate-700 bg-slate-800 rounded-lg hover:bg-orange-600 hover:border-orange-500 hover:text-white text-slate-300 transition font-bold text-xs group">
-                            10h
-                        </button>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <button onclick="playSound('click'); setHours(4)" class="py-2.5 border border-white/5 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-500 rounded-xl text-slate-300 hover:text-white transition font-semibold">4h</button>
+                        <button onclick="playSound('click'); setHours(8)" class="py-2.5 border border-white/5 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-500 rounded-xl text-slate-300 hover:text-white transition font-semibold">8h</button>
+                        <button onclick="playSound('click'); setHours(10)" class="py-2.5 border border-white/5 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-500 rounded-xl text-slate-300 hover:text-white transition font-semibold">10h</button>
                     </div>
                     <div class="relative group">
-                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-900/50 focus:border-blue-500 outline-none text-white text-xl font-bold transition-all pl-12" placeholder="0.0">
-                        <i class="fa-solid fa-hourglass-half absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-regular fa-clock text-slate-500 group-focus-within:text-blue-500 transition"></i>
+                        </div>
+                        <input type="number" id="hoursInput" step="0.5" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white transition placeholder-slate-600" placeholder="Custom duration...">
                     </div>
                 </div>
-                
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quest Notes</label>
-                    <textarea id="notesInput" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none text-white text-sm" placeholder="What did you achieve?"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                    <button onclick="deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-900/30 rounded-xl font-bold text-sm hidden transition border border-transparent hover:border-red-900/50">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                    <button onclick="saveEntry()" class="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 transform hover:-translate-y-0.5 transition-all">
-                        <i class="fa-solid fa-check mr-2"></i> Save
-                    </button>
+                    <textarea id="notesInput" rows="2" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white transition placeholder-slate-600" placeholder="Describe your achievements..."></textarea>
                 </div>
             </div>
-
-            <!-- Right Side: Everyone's Status for that day -->
-            <div class="w-full md:w-64 bg-slate-950/50 p-6 flex flex-col">
-                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Party Report</h3>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-800 transition md:hidden">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-white hidden md:block hover:text-red-400 transition">
-                         <i class="fa-solid fa-xmark fa-lg"></i>
-                    </button>
-                </div>
-                
-                <div id="modalDaySummary" class="space-y-3 overflow-y-auto flex-1 max-h-[300px] no-scrollbar">
-                    <!-- Populated by JS -->
+            <div class="p-6 border-t border-white/5 flex justify-end gap-3 bg-black/20 rounded-b-2xl">
+                <button onclick="deleteEntry()" id="deleteBtn" class="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg font-medium hidden text-sm transition">Abandon Quest</button>
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="px-5 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg font-medium text-sm transition">Cancel</button>
+                    <button onclick="saveEntry()" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-blue-500/20 text-sm transition-all transform hover:scale-105">Complete Mission</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Achievements / Toast -->
-    <div id="toast" class="fixed bottom-8 right-8 z-50 transform translate-y-32 opacity-0 transition-all duration-500">
-        <div class="bg-slate-800/90 backdrop-blur-md border border-green-500/30 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px] relative overflow-hidden">
-            <div class="absolute inset-0 bg-green-500/5"></div>
-            <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg shrink-0">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <div>
-                <h4 class="font-bold text-green-400 text-sm uppercase tracking-wide">Success!</h4>
-                <p id="toastMessage" class="text-sm text-slate-200 font-medium">XP Added to your profile.</p>
-            </div>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-slate-800/90 backdrop-blur border border-green-500/30 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 opacity-0 transition-all duration-500 z-50 flex items-center gap-4">
+        <div class="bg-green-500/20 p-2 rounded-full text-green-400">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm">Success</h4>
+            <span id="toastMessage" class="text-xs text-slate-300">Data saved</span>
         </div>
     </div>
 
@@ -386,6 +367,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyDUsDIShAvRwd73ag9_uBKmMWzNc6VNIDs",
             authDomain: "familytracker-153b0.firebaseapp.com",
@@ -397,19 +379,40 @@
             measurementId: "G-HDB997HYD5"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const dbRef = ref(db, 'familyTimeTracker');
 
         const USERS = ['Mohammad', 'Fadwa', 'Alia', 'Tasneem'];
-        const USER_CONFIG = {
-            'Mohammad': { color: 'blue', icon: 'fa-shield-halved' },
-            'Fadwa': { color: 'purple', icon: 'fa-wand-magic-sparkles' },
-            'Alia': { color: 'pink', icon: 'fa-heart' },
-            'Tasneem': { color: 'emerald', icon: 'fa-leaf' }
+        // Updated colors to match neon aesthetic
+        const DOT_COLORS = { 
+            'Mohammad': 'bg-blue-500 shadow-blue-500/50', 
+            'Fadwa': 'bg-purple-500 shadow-purple-500/50', 
+            'Alia': 'bg-pink-500 shadow-pink-500/50', 
+            'Tasneem': 'bg-emerald-500 shadow-emerald-500/50' 
         };
+        const GRADIENTS = {
+            'Mohammad': 'bg-gradient-to-r from-blue-600 to-cyan-400',
+            'Fadwa': 'bg-gradient-to-r from-purple-600 to-fuchsia-400',
+            'Alia': 'bg-gradient-to-r from-pink-600 to-rose-400',
+            'Tasneem': 'bg-gradient-to-r from-emerald-600 to-teal-400'
+        };
+        const TEXT_COLORS = { 
+            'Mohammad': 'text-blue-400', 
+            'Fadwa': 'text-purple-400', 
+            'Alia': 'text-pink-400', 
+            'Tasneem': 'text-emerald-400' 
+        };
+        const CHART_COLORS = { 'Mohammad': '#3b82f6', 'Fadwa': '#a855f7', 'Alia': '#ec4899', 'Tasneem': '#10b981' };
         const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
+        // GAMIFICATION CONSTANTS
+        const XP_PER_HOUR = 100;
+        const HOURS_PER_LEVEL = 10; 
+        const XP_PER_LEVEL = HOURS_PER_LEVEL * XP_PER_HOUR; // 1000 XP per level
+        const RANKS = ["Novice", "Apprentice", "Journeyman", "Expert", "Master", "Grandmaster", "Legend"];
+
         // Globals
         const savedUser = localStorage.getItem('familyTracker_currentUser');
         window.currentUser = (savedUser && USERS.includes(savedUser)) ? savedUser : USERS[0];
@@ -417,107 +420,100 @@
         window.selectedDateForModal = null;
         window.appData = {};
         let statsChartInstance = null;
+        
+        // Audio Context
+        let audioCtx;
 
-        // --- SOUND ENGINE (Web Audio API) ---
-        class SoundEngine {
-            constructor() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        /* --- SOUND SYSTEM --- */
+        window.initAudio = function() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
-            playTone(freq, type, duration, delay=0, vol=0.1) {
-                if(this.ctx.state === 'suspended') this.ctx.resume();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+        window.playSound = function(type) {
+            window.initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } 
+            else if (type === 'levelup') {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
                 
-                gain.gain.setValueAtTime(0, this.ctx.currentTime + delay);
-                gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + delay + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+                osc.type = 'triangle';
+                osc2.type = 'sine';
                 
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(this.ctx.currentTime + delay);
-                osc.stop(this.ctx.currentTime + delay + duration);
-            }
-
-            static playClick() {
-                const s = new SoundEngine();
-                // Short high-pitch blip
-                s.playTone(800, 'sine', 0.1, 0, 0.05);
-            }
-
-            static playSuccess() {
-                const s = new SoundEngine();
-                // Major triad arpeggio
-                s.playTone(523.25, 'sine', 0.3, 0); // C5
-                s.playTone(659.25, 'sine', 0.3, 0.1); // E5
-                s.playTone(783.99, 'sine', 0.6, 0.2); // G5
-            }
-
-            static playLevelUp() {
-                const s = new SoundEngine();
-                // Fanfare
-                [440, 554, 659, 880].forEach((freq, i) => {
-                    s.playTone(freq, 'triangle', 0.5, i * 0.1, 0.1);
+                // Arpeggio
+                [440, 554, 659, 880, 1108, 1318].forEach((freq, i) => {
+                    setTimeout(() => {
+                         const o = audioCtx.createOscillator();
+                         const g = audioCtx.createGain();
+                         o.connect(g);
+                         g.connect(audioCtx.destination);
+                         o.frequency.value = freq;
+                         g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                         g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                         o.start();
+                         o.stop(audioCtx.currentTime + 0.5);
+                    }, i * 80);
                 });
             }
-
-            static playDelete() {
-                const s = new SoundEngine();
-                s.playTone(150, 'sawtooth', 0.3, 0, 0.05);
+            else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.02, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+            else if (type === 'delete') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
             }
         }
-        // Expose to window for HTML onclicks
-        window.SoundEngine = SoundEngine;
 
-        // --- GAMIFICATION LOGIC ---
-        function calculateLevel(totalHours) {
-            // 1 Hour = 50 XP
-            // Level formula: Level = floor(sqrt(XP / 100)) + 1
-            const xp = Math.floor(totalHours * 50);
-            const level = Math.floor(Math.sqrt(xp / 100)) + 1;
-            const nextLevelXp = Math.pow(level, 2) * 100;
-            const prevLevelXp = Math.pow(level - 1, 2) * 100;
-            const progress = ((xp - prevLevelXp) / (nextLevelXp - prevLevelXp)) * 100;
-            return { level, xp, progress, nextLevelXp };
+        window.triggerConfetti = function() {
+            var count = 200;
+            var defaults = { origin: { y: 0.7 } };
+
+            function fire(particleRatio, opts) {
+              confetti(Object.assign({}, defaults, opts, {
+                particleCount: Math.floor(count * particleRatio)
+              }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55, colors: ['#3b82f6', '#ec4899'] });
+            fire(0.2, { spread: 60, colors: ['#a855f7', '#10b981'] });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
         }
 
-        function getBadges(user, data) {
-            const badges = [];
-            let totalHours = 0;
-            let maxStreak = 0;
-            let currentStreak = 0;
-            let maxDay = 0;
-            const year = new Date().getFullYear();
-
-            // Analyze data
-            const dates = Object.keys(data).sort();
-            dates.forEach((date, i) => {
-                const hrs = parseFloat(data[date].hours);
-                totalHours += hrs;
-                if(hrs > maxDay) maxDay = hrs;
-
-                if (hrs >= 2) {
-                    currentStreak++;
-                } else {
-                    currentStreak = 0;
-                }
-                if (currentStreak > maxStreak) maxStreak = currentStreak;
-            });
-
-            // Badge Rules
-            if (maxStreak >= 3) badges.push({ icon: 'fa-fire', color: 'text-orange-500', title: 'Streak Apprentice (3 Days)' });
-            if (maxStreak >= 7) badges.push({ icon: 'fa-fire-flame-curved', color: 'text-red-500', title: 'Streak Master (7 Days)' });
-            if (totalHours >= 50) badges.push({ icon: 'fa-medal', color: 'text-yellow-400', title: 'Novice (50h)' });
-            if (totalHours >= 100) badges.push({ icon: 'fa-trophy', color: 'text-yellow-500', title: 'Expert (100h)' });
-            if (maxDay >= 8) badges.push({ icon: 'fa-dumbbell', color: 'text-blue-400', title: 'Hard Worker (8h Day)' });
-            if (maxDay >= 10) badges.push({ icon: 'fa-dragon', color: 'text-purple-400', title: 'Beast Mode (10h Day)' });
-
-            return badges;
-        }
-
-        // --- MAIN APP LOGIC ---
+        /* --- LOGIC --- */
 
         function init() {
             USERS.forEach(user => { if (!window.appData[user]) window.appData[user] = {}; });
@@ -539,29 +535,23 @@
             });
 
             updateTodayDisplay();
-            renderCalendar();
+            renderCalendar(); 
             renderUsersList();
             
-            // Add global click sound listener for buttons
-            document.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if(!btn.onclick) SoundEngine.playClick();
-                });
-            });
+            document.body.addEventListener('click', window.initAudio, { once: true });
         }
 
         window.switchPage = function(page) {
-            SoundEngine.playClick();
             const pages = ['calendar', 'stats', 'consistency'];
             pages.forEach(p => {
                 const btn = document.getElementById(`btn${p.charAt(0).toUpperCase() + p.slice(1)}View`);
                 const pageEl = document.getElementById(`${p}Page`);
                 if (p === page) {
-                    btn.classList.add('active', 'text-white');
+                    btn.classList.add('active');
                     btn.classList.remove('text-slate-400');
                     pageEl.classList.remove('hidden');
                 } else {
-                    btn.classList.remove('active', 'text-white');
+                    btn.classList.remove('active');
                     btn.classList.add('text-slate-400');
                     pageEl.classList.add('hidden');
                 }
@@ -572,41 +562,54 @@
             if (page === 'calendar') renderCalendar();
         }
 
+        function getUserStats(user) {
+            let totalHours = 0;
+            if (window.appData[user]) {
+                for (const [key, val] of Object.entries(window.appData[user])) {
+                    totalHours += parseFloat(val.hours || 0);
+                }
+            }
+            
+            const level = Math.floor(totalHours / HOURS_PER_LEVEL) + 1;
+            const currentLevelXP = Math.round((totalHours % HOURS_PER_LEVEL) * XP_PER_HOUR);
+            const totalXP = Math.round(totalHours * XP_PER_HOUR);
+            const neededXP = XP_PER_LEVEL;
+            const progressPercent = (currentLevelXP / neededXP) * 100;
+            
+            const rankIndex = Math.min(Math.floor((level - 1) / 5), RANKS.length - 1);
+            const rankTitle = RANKS[rankIndex];
+
+            let monthTotal = 0;
+            const currentYear = window.currentDate.getFullYear();
+            const currentMonth = window.currentDate.getMonth();
+            if (window.appData[user]) {
+                for (const [key, val] of Object.entries(window.appData[user])) {
+                    const d = new Date(key);
+                    if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                        monthTotal += parseFloat(val.hours);
+                    }
+                }
+            }
+
+            return { level, currentLevelXP, neededXP, progressPercent, rankTitle, totalXP, monthTotal };
+        }
+
         window.renderUsersList = function() {
             const listContainer = document.getElementById('usersList');
             document.getElementById('btnUserName').innerText = window.currentUser;
             listContainer.innerHTML = '';
 
-            const currentYear = window.currentDate.getFullYear();
-            const currentMonth = window.currentDate.getMonth();
-            const monthlyGoal = 160;
-
             USERS.forEach(user => {
-                let mTotal = 0;
-                let allTimeTotal = 0;
+                const stats = getUserStats(user);
                 
-                if (window.appData[user]) {
-                    for (const [key, val] of Object.entries(window.appData[user])) {
-                        const d = new Date(key);
-                        const h = parseFloat(val.hours);
-                        allTimeTotal += h;
-                        if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-                            mTotal += h;
-                        }
-                    }
-                }
-
-                // Gamification Calcs
-                const stats = calculateLevel(allTimeTotal);
-                const badges = getBadges(user, window.appData[user] || {});
                 const isActive = user === window.currentUser;
-                const config = USER_CONFIG[user];
-                
-                // Card HTML
+                const gradient = GRADIENTS[user];
+
                 const div = document.createElement('div');
-                div.className = `user-card p-4 rounded-2xl cursor-pointer relative overflow-hidden ${isActive ? 'active' : 'bg-slate-800/40 border-slate-700/30'}`;
+                div.className = `user-card p-4 rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden group glass-card ${isActive ? 'active' : ''}`;
+                
                 div.onclick = () => { 
-                    SoundEngine.playClick();
+                    playSound('click');
                     window.currentUser = user; 
                     localStorage.setItem('familyTracker_currentUser', user);
                     renderUsersList(); 
@@ -616,34 +619,28 @@
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-3 relative z-10">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl bg-${config.color}-600 flex items-center justify-center text-white shadow-lg relative">
-                                <i class="fa-solid ${config.icon} text-xl"></i>
-                                <div class="absolute -bottom-2 -right-2 bg-yellow-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow border border-slate-900">Lvl ${stats.level}</div>
+                            <div class="relative">
+                                <span class="w-12 h-12 rounded-xl bg-slate-800/80 flex items-center justify-center font-bold text-lg border border-white/10 shadow-lg text-slate-200 group-hover:scale-105 transition-transform">${user.charAt(0)}</span>
+                                <span class="absolute -bottom-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow level-badge border border-white/20">Lvl ${stats.level}</span>
                             </div>
                             <div>
-                                <h4 class="font-bold text-white leading-tight">${user}</h4>
-                                <div class="text-[10px] text-${config.color}-400 font-bold uppercase tracking-wider">${stats.xp} XP</div>
+                                <span class="font-bold text-white block leading-tight text-lg tracking-tight">${user}</span>
+                                <span class="text-[10px] text-blue-300 uppercase tracking-widest font-semibold">${stats.rankTitle}</span>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-black text-white">${mTotal}<span class="text-sm text-slate-500 font-medium">h</span></span>
-                            <div class="text-[10px] text-slate-500">Monthly</div>
+                        <div class="text-right bg-black/20 px-2 py-1 rounded-lg border border-white/5">
+                             <span class="text-[9px] text-slate-400 block uppercase font-bold">Total XP</span>
+                             <span class="font-bold text-blue-400 font-mono text-sm">${stats.totalXP}</span>
                         </div>
                     </div>
                     
-                    <div class="relative z-10 space-y-2">
-                        <!-- XP Bar -->
-                        <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+                    <div class="relative z-10 mt-3">
+                        <div class="flex justify-between text-[10px] text-slate-400 mb-1.5 font-bold uppercase tracking-wide">
                             <span>Level Progress</span>
-                            <span>${Math.round(stats.progress)}%</span>
+                            <span>${stats.currentLevelXP} / ${stats.neededXP} XP</span>
                         </div>
-                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden xp-bar-bg">
-                            <div class="h-full xp-bar-fill w-0" style="background: ${isActive ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)' : '#64748b'}; width: ${stats.progress}%"></div>
-                        </div>
-
-                        <!-- Badges Row -->
-                        <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar py-1">
-                            ${badges.length > 0 ? badges.map(b => `<i class="fa-solid ${b.icon} ${b.color} badge-icon" title="${b.title}"></i>`).join('') : '<span class="text-[10px] text-slate-600 italic">No badges yet...</span>'}
+                        <div class="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden shadow-inner border border-white/5 xp-bar-container">
+                            <div class="${gradient} h-full xp-bar-fill shadow-[0_0_15px_rgba(255,255,255,0.3)]" style="width: ${stats.progressPercent}%"></div>
                         </div>
                     </div>
                 `;
@@ -660,25 +657,23 @@
             const userEntries = Object.entries(window.appData[window.currentUser])
                 .map(([k, v]) => ({ date: k, ...v }))
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 4);
+                .slice(0, 3);
 
             if (userEntries.length === 0) {
-                recentContainer.innerHTML = `<div class="text-center py-4 text-slate-600"><i class="fa-regular fa-clipboard mb-2 block text-2xl"></i><span class="text-xs">No quests completed yet.</span></div>`;
+                recentContainer.innerHTML = `<p class="text-slate-500 italic text-xs text-center py-4">No quests completed recently.</p>`;
             } else {
                 userEntries.forEach(entry => {
-                    const d = new Date(entry.date);
+                    const xpGained = Math.round(parseFloat(entry.hours) * XP_PER_HOUR);
                     recentContainer.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-slate-700 w-8 h-8 rounded-lg flex items-center justify-center text-xs text-slate-400 font-bold">
-                                    ${d.getDate()}
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-slate-300 text-xs font-bold">${d.toLocaleDateString('en-US', {month:'short'})}</span>
-                                    <span class="text-slate-500 text-[10px] truncate max-w-[100px]">${entry.notes || 'Work'}</span>
-                                </div>
+                        <div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-xl border border-white/5 hover:bg-slate-800/60 transition group">
+                            <div>
+                                <div class="text-blue-400 text-[9px] uppercase font-bold tracking-wider mb-0.5">${new Date(entry.date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
+                                <div class="text-slate-200 font-medium text-xs group-hover:text-white">${entry.notes ? entry.notes.substring(0, 18) + (entry.notes.length>18?'...':'') : 'Work Log'}</div>
                             </div>
-                            <span class="text-blue-400 font-black text-sm">+${Math.floor(entry.hours * 50)} XP</span>
+                            <div class="text-right">
+                                <span class="text-amber-400 font-bold text-xs block text-shadow">+${xpGained} XP</span>
+                                <span class="text-slate-500 text-[9px] font-mono">${entry.hours}h</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -696,7 +691,6 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const startingDay = firstDay.getDay();
 
-            // Empty slots
             for (let i = 0; i < startingDay; i++) {
                 grid.appendChild(document.createElement('div'));
             }
@@ -706,36 +700,32 @@
                 const dateKey = formatDateKey(dateObj);
                 const isToday = dateKey === formatDateKey(new Date());
 
-                let dotsHtml = '';
-                let mainUserHours = 0;
-
+                let indicatorsHtml = '';
                 USERS.forEach(user => {
                     const entry = window.appData[user] ? window.appData[user][dateKey] : null;
                     if (entry) {
-                        const config = USER_CONFIG[user];
-                        // FIXED: Removed opacity-40 grayscale to make all dots visible
-                        const opacity = user === window.currentUser ? 'opacity-100 ring-1 ring-white/50' : 'opacity-100'; 
-                        dotsHtml += `<div class="w-2 h-2 rounded-full bg-${config.color}-500 ${opacity}" title="${user}: ${entry.hours}h"></div>`;
-                        if(user === window.currentUser) mainUserHours = entry.hours;
+                        const barWidth = Math.min(100, (entry.hours / 10) * 100);
+                        const isSelected = user === window.currentUser;
+                        const colorClass = DOT_COLORS[user];
+                        // Show Hour Text here explicitly
+                        indicatorsHtml += `
+                            <div class="${colorClass} ${isSelected ? 'opacity-100 ring-1 ring-white/50' : 'opacity-80'} text-white text-[9px] px-2 py-0.5 rounded-md flex justify-between items-center mb-1 shadow-sm border border-black/10" style="width: ${Math.max(45, barWidth)}%">
+                                <span class="font-bold drop-shadow-sm">${user.charAt(0)}</span>
+                                <span class="font-mono text-[8px] opacity-90">${entry.hours}h</span>
+                            </div>`;
                     }
                 });
 
-                const completedStyle = mainUserHours >= 8 ? 'bg-slate-800 border-green-500/50' : (mainUserHours > 0 ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-900/50 border-slate-800');
-                const todayStyle = isToday ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/20' : '';
-
                 const dayEl = document.createElement('div');
-                dayEl.className = `calendar-day rounded-xl p-2 cursor-pointer flex flex-col justify-between border ${completedStyle} ${todayStyle}`;
+                dayEl.className = `calendar-day rounded-xl p-2 cursor-pointer flex flex-col justify-between bg-slate-800/30 border border-white/5 hover:bg-slate-700/50 ${isToday ? 'ring-1 ring-blue-500 bg-blue-500/10' : ''}`;
                 dayEl.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="${isToday ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold' : 'text-slate-500 text-xs font-bold'}">${d}</span>
-                        ${mainUserHours > 0 ? `<span class="text-[10px] font-black text-white bg-slate-700/50 px-1.5 rounded">${mainUserHours}h</span>` : ''}
+                    <div class="text-xs font-semibold flex justify-between items-start mb-1">
+                        <span class="${isToday ? 'text-blue-400 font-bold text-sm' : 'text-slate-500'}">${d}</span>
+                        ${isToday ? '<span class="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shadow-lg shadow-blue-500/40">Today</span>' : ''}
                     </div>
-                    <div class="flex gap-1 flex-wrap mt-2 content-end">${dotsHtml}</div>
+                    <div class="flex flex-col w-full mt-auto gap-0.5">${indicatorsHtml}</div>
                 `;
-                dayEl.onclick = () => {
-                    SoundEngine.playClick();
-                    openLogModal(dateObj);
-                };
+                dayEl.onclick = () => { playSound('click'); openLogModal(dateObj); };
                 grid.appendChild(dayEl);
             }
         }
@@ -745,102 +735,87 @@
             const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             
-            document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} Stats`;
+            document.getElementById('statsMonthTitle').innerText = `${MONTH_NAMES[month]} ${year} Stats`;
             
             let userTotals = {};
-            let userXP = {};
-            let userDays = {};
-            
             USERS.forEach(user => {
                 let uSum = 0;
-                let dCount = 0;
                 if (window.appData[user]) {
                     for (const [key, val] of Object.entries(window.appData[user])) {
                         const d = new Date(key);
                         if (d.getMonth() === month && d.getFullYear() === year) {
                             uSum += parseFloat(val.hours);
-                            if(parseFloat(val.hours) > 0) dCount++;
                         }
                     }
                 }
                 userTotals[user] = uSum;
-                userXP[user] = uSum * 50;
-                userDays[user] = dCount;
             });
 
             const avgGrid = document.getElementById('personAvgGrid');
             avgGrid.innerHTML = '';
             USERS.forEach(user => {
-                const config = USER_CONFIG[user];
-                // Added Avg back
-                const avg = userDays[user] > 0 ? (userTotals[user] / userDays[user]).toFixed(1) : 0;
-                
+                const avg = (userTotals[user] / daysInMonth).toFixed(1);
+                const gradient = GRADIENTS[user];
                 avgGrid.innerHTML += `
-                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden">
-                        <div class="absolute right-0 top-0 w-24 h-24 bg-${config.color}-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                        <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">${user}</h3>
-                        <div class="text-3xl font-black text-white">${userTotals[user]}<span class="text-sm font-medium text-slate-500">h</span></div>
-                        <div class="flex justify-between items-end mt-2">
-                             <div class="text-xs font-bold text-${config.color}-400">+${userXP[user]} XP</div>
-                             <div class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">Avg: ${avg}h</div>
-                        </div>
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-transparent hover:border-l-blue-500 transition-all group overflow-hidden relative">
+                         <div class="absolute right-0 top-0 w-24 h-24 bg-white/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                        <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">${user}</h3>
+                        <div class="text-3xl font-bold text-white relative z-10">${avg}h <span class="text-xs text-slate-500 font-normal">/day</span></div>
                     </div>
                 `;
             });
 
-            const sorted = Object.entries(userXP).sort((a,b) => b[1] - a[1]);
+            const sorted = Object.entries(userTotals).sort((a,b) => b[1] - a[1]);
             document.getElementById('statTopPerformer').innerText = sorted[0][1] > 0 ? sorted[0][0] : '-';
 
             const leaderboard = document.getElementById('statsLeaderboard');
             leaderboard.innerHTML = '';
-            sorted.forEach(([user, xp], idx) => {
-                const config = USER_CONFIG[user];
-                const rankColor = idx === 0 ? 'text-yellow-400' : (idx === 1 ? 'text-slate-300' : 'text-orange-700');
-                const trophy = idx === 0 ? '<i class="fa-solid fa-trophy"></i>' : `#${idx+1}`;
+            sorted.forEach(([user, hrs], idx) => {
+                const xp = Math.round(hrs * XP_PER_HOUR);
+                const bgClass = idx === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-amber-600/20 border-yellow-500/30' : 'bg-slate-800/40 border-white/5';
+                const trophy = idx === 0 ? '<i class="fa-solid fa-crown text-yellow-500 mr-2"></i>' : `<span class="text-slate-500 font-mono mr-3 text-sm">#${idx + 1}</span>`;
                 
                 leaderboard.innerHTML += `
-                    <div class="bg-slate-800/40 p-4 rounded-xl flex items-center justify-between border border-slate-700/50">
-                        <div class="flex items-center gap-4">
-                            <span class="text-xl font-black ${rankColor} w-8 text-center">${trophy}</span>
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-lg bg-${config.color}-500/20 text-${config.color}-400 flex items-center justify-center"><i class="fa-solid ${config.icon}"></i></div>
-                                <span class="font-bold text-slate-200">${user}</span>
-                            </div>
+                    <div class="${bgClass} p-4 rounded-xl flex items-center justify-between border relative overflow-hidden">
+                        <div class="flex items-center gap-3 relative z-10">
+                            ${trophy}
+                            <div class="w-8 h-8 rounded-lg ${DOT_COLORS[user].split(' ')[0]} flex items-center justify-center font-bold text-white text-xs">${user.charAt(0)}</div>
+                            <span class="font-bold text-slate-200">${user}</span>
                         </div>
-                        <span class="text-xl font-black text-white">${xp} <span class="text-[10px] text-slate-500 uppercase">XP</span></span>
+                        <div class="text-right relative z-10">
+                            <span class="block text-lg font-bold text-white">${hrs}h</span>
+                            <span class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider">${xp} XP</span>
+                        </div>
                     </div>
                 `;
             });
 
-            // Chart Logic
             const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
             const datasets = USERS.map(user => {
-                const config = USER_CONFIG[user];
-                let accumXP = 0;
                 const data = labels.map(day => {
                     const key = formatDateKey(new Date(year, month, day));
-                    const h = window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
-                    accumXP += (h * 50); // Accumulative XP graph
-                    return accumXP;
+                    return window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
                 });
                 return {
                     label: user,
                     data: data,
-                    borderColor: getComputedStyle(document.documentElement).getPropertyValue(`--color-${config.color}-500`) || config.color, // Simplified color fallback
-                    backgroundColor: 'transparent',
-                    borderWidth: 3,
+                    borderColor: CHART_COLORS[user],
+                    backgroundColor: CHART_COLORS[user] + '20', // Hex + Alpha
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
                     pointRadius: 0,
-                    tension: 0.4
+                    pointHoverRadius: 4
                 };
             });
 
             const ctx = document.getElementById('statsChart').getContext('2d');
             if (statsChartInstance) statsChartInstance.destroy();
             
-            // Custom colors for chart since tailwind classes aren't avail in JS context directly easily
-            const colorsMap = { 'Mohammad': '#2563eb', 'Fadwa': '#9333ea', 'Alia': '#db2777', 'Tasneem': '#059669' };
-            datasets.forEach(d => d.borderColor = colorsMap[d.label]);
-
+            // Chart.js dark theme config
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.borderColor = '#1e293b';
+            
             statsChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: { labels, datasets },
@@ -848,10 +823,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { labels: { color: '#94a3b8', font: {family: 'Outfit'} } } },
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6 } } },
                     scales: {
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
-                        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
@@ -863,20 +838,18 @@
             const month = window.currentDate.getMonth();
             const year = window.currentDate.getFullYear();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const todayDate = new Date().getDate();
+            const minHours = 2;
 
             USERS.forEach(user => {
                 let consistentDays = 0;
                 let currentStreak = 0;
                 let maxStreak = 0;
                 let history = [];
-                const config = USER_CONFIG[user];
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const key = formatDateKey(new Date(year, month, d));
                     const hrs = window.appData[user] && window.appData[user][key] ? window.appData[user][key].hours : 0;
-                    const isConsistent = hrs >= 2;
-                    
+                    const isConsistent = hrs >= minHours;
                     history.push(isConsistent);
                     if (isConsistent) {
                         consistentDays++;
@@ -886,39 +859,39 @@
                         currentStreak = 0;
                     }
                 }
+
+                const reliability = Math.round((consistentDays / daysInMonth) * 100);
+                const textColor = TEXT_COLORS[user];
                 
-                // Added Reliability and Consistent Days
-                const reliability = Math.round((consistentDays / todayDate) * 100);
-
                 grid.innerHTML += `
-                    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                            <i class="fa-solid ${config.icon} text-6xl text-${config.color}-500"></i>
-                        </div>
-                        
+                    <div class="glass-panel p-6 rounded-2xl border border-white/5 flex flex-col hover:border-white/10 transition-colors group">
                         <div class="flex items-center justify-between mb-6">
-                            <h4 class="font-black text-xl text-white">${user}</h4>
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl ${GRADIENTS[user]} flex items-center justify-center font-bold text-white shadow-lg shadow-white/5 text-lg">${user.charAt(0)}</div>
+                                <div>
+                                    <h4 class="font-bold text-white leading-tight text-lg">${user}</h4>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <i class="fa-solid fa-fire text-orange-500 text-xs"></i>
+                                        <span class="text-xs text-slate-400 font-medium">Max Streak: <span class="text-white">${maxStreak}</span></span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="text-right">
-                                <div class="text-[10px] text-slate-500 uppercase font-bold">Max Streak</div>
-                                <div class="text-2xl font-black text-${config.color}-400">${maxStreak} <span class="text-sm text-slate-500">days</span></div>
+                                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Reliability</div>
+                                <div class="text-3xl font-black ${textColor}">${reliability}%</div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
-                                <div class="text-[10px] text-slate-500 uppercase font-bold">Reliability</div>
-                                <div class="text-lg font-bold text-white">${reliability}%</div>
-                            </div>
-                            <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
-                                <div class="text-[10px] text-slate-500 uppercase font-bold">Consistent</div>
-                                <div class="text-lg font-bold text-white">${consistentDays} <span class="text-xs text-slate-400">days</span></div>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-1 flex-wrap">
-                            ${history.map((isOk, idx) => `
-                                <div class="w-2.5 h-4 rounded-sm ${isOk ? `bg-${config.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.5)] shadow-${config.color}-500/50` : 'bg-slate-800'} transition-all hover:scale-125" title="Day ${idx+1}"></div>
-                            `).join('')}
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5 mb-4">
+                             <div class="flex justify-between items-end mb-2">
+                                <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Activity Log</span>
+                                <span class="text-[10px] font-mono text-slate-400">${consistentDays}/${daysInMonth} Days</span>
+                             </div>
+                             <div class="grid grid-cols-10 gap-1.5">
+                                ${history.map((isOk, idx) => `
+                                    <div class="aspect-square rounded-[2px] ${isOk ? GRADIENTS[user] + ' shadow-[0_0_8px_rgba(255,255,255,0.2)]' : 'bg-slate-800/40'} transition-all hover:scale-125" title="Day ${idx+1}: ${isOk?'Success':'Missed'}"></div>
+                                `).join('')}
+                             </div>
                         </div>
                     </div>
                 `;
@@ -926,7 +899,6 @@
         }
 
         window.changeMonth = function(delta) {
-            SoundEngine.playClick();
             window.currentDate.setMonth(window.currentDate.getMonth() + delta);
             renderCalendar();
             renderUsersList();
@@ -939,9 +911,8 @@
             const dateKey = formatDateKey(date);
             const entry = window.appData[window.currentUser] ? window.appData[window.currentUser][dateKey] : null;
             document.getElementById('modalUserName').innerText = window.currentUser;
-            document.getElementById('modalDateDisplay').innerText = date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+            document.getElementById('modalDateDisplay').innerText = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
             
-            // Populate Input Form
             if (entry) {
                 document.getElementById('hoursInput').value = entry.hours;
                 document.getElementById('notesInput').value = entry.notes || '';
@@ -951,46 +922,6 @@
                 document.getElementById('notesInput').value = '';
                 document.getElementById('deleteBtn').classList.add('hidden');
             }
-
-            // --- POPULATE PARTY SUMMARY ---
-            const summaryContainer = document.getElementById('modalDaySummary');
-            summaryContainer.innerHTML = '';
-            
-            let hasEntries = false;
-            USERS.forEach(user => {
-                const uEntry = window.appData[user] ? window.appData[user][dateKey] : null;
-                const config = USER_CONFIG[user];
-                if(uEntry) {
-                    hasEntries = true;
-                    summaryContainer.innerHTML += `
-                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-${config.color}-600 text-white flex items-center justify-center shadow-lg">
-                                    <i class="fa-solid ${config.icon} text-xs"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-bold text-white">${user}</div>
-                                    <div class="text-[10px] text-slate-400 truncate w-20">${uEntry.notes || 'No notes'}</div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-white text-sm">${uEntry.hours}h</div>
-                                <div class="text-[9px] text-${config.color}-400 font-bold">+${Math.floor(uEntry.hours*50)} XP</div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-
-            if (!hasEntries) {
-                summaryContainer.innerHTML = `
-                    <div class="text-center py-8 opacity-50">
-                        <i class="fa-solid fa-ghost text-4xl mb-2 text-slate-600"></i>
-                        <p class="text-xs text-slate-500">No activity logged by anyone yet.</p>
-                    </div>
-                `;
-            }
-
             document.getElementById('logModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('logModal').classList.remove('opacity-0'), 10);
         }
@@ -1000,12 +931,11 @@
             setTimeout(() => document.getElementById('logModal').classList.add('hidden'), 300);
         }
 
-        window.setHours = function(h) { 
-            SoundEngine.playClick();
-            document.getElementById('hoursInput').value = h; 
-        }
+        window.setHours = function(h) { document.getElementById('hoursInput').value = h; }
 
         window.saveEntry = function() {
+            const oldStats = getUserStats(window.currentUser);
+            
             const hours = parseFloat(document.getElementById('hoursInput').value);
             const notes = document.getElementById('notesInput').value;
             const dateKey = formatDateKey(window.selectedDateForModal);
@@ -1018,56 +948,42 @@
                 }
             } else { 
                 window.appData[window.currentUser][dateKey] = { hours, notes }; 
-                
-                // --- GAMIFICATION EFFECTS ---
-                SoundEngine.playSuccess();
-                
-                // Floating Text Effect
-                const btn = document.activeElement;
-                if(btn) {
-                    const rect = btn.getBoundingClientRect();
-                    const floatEl = document.createElement('div');
-                    floatEl.className = 'floating-xp';
-                    floatEl.innerText = `+${Math.floor(hours * 50)} XP`;
-                    floatEl.style.left = `${rect.left + rect.width/2}px`;
-                    floatEl.style.top = `${rect.top}px`;
-                    document.body.appendChild(floatEl);
-                    setTimeout(() => floatEl.remove(), 1000);
-                }
-
-                // Confetti if hours > 4
-                if (hours >= 4) {
-                    confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#3b82f6', '#8b5cf6', '#fbbf24']
-                    });
-                }
             }
-            saveToStorage();
+
+            // Save and Check for Level Up
+            saveToStorage().then(() => {
+                const newStats = getUserStats(window.currentUser);
+                if (newStats.level > oldStats.level) {
+                    playSound('levelup');
+                    triggerConfetti();
+                    showToast(`LEVEL UP! Rank: ${newStats.rankTitle}`);
+                } else {
+                    playSound('success');
+                    showToast(`Quest Complete! +${Math.round(hours * XP_PER_HOUR)} XP`);
+                }
+            });
+            
             closeModal();
-            showToast(`Quest Complete! ${hours} hours logged.`);
         }
 
         window.deleteEntry = function() {
-            SoundEngine.playDelete();
+            playSound('delete');
             const dateKey = formatDateKey(window.selectedDateForModal);
             if (window.appData[window.currentUser] && window.appData[window.currentUser][dateKey]) {
                 delete window.appData[window.currentUser][dateKey];
                 saveToStorage();
             }
             closeModal();
-            showToast("Quest Abandoned (Entry deleted)");
+            showToast("Quest Abandoned");
         }
 
-        function saveToStorage() {
-            set(dbRef, window.appData)
-                .then(() => console.log("Synced"))
-                .catch((e) => console.error(e));
-            
+        async function saveToStorage() {
             renderCalendar();
             renderUsersList();
+            return set(dbRef, window.appData).catch((error) => {
+                console.error("Error saving:", error);
+                showToast("Connection Error!");
+            });
         }
 
         window.exportData = function() {
@@ -1083,10 +999,11 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
+                playSound('success');
+                triggerConfetti();
                 window.appData = JSON.parse(e.target.result);
                 saveToStorage();
-                showToast("Save file loaded!");
-                SoundEngine.playLevelUp();
+                showToast("Save Game Loaded!");
             };
             reader.readAsText(file);
         }
@@ -1105,7 +1022,7 @@
         }
 
         function updateTodayDisplay() {
-            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
 
         window.addEventListener('DOMContentLoaded', init);
